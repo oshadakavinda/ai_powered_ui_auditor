@@ -1,24 +1,28 @@
 import { useState } from 'react'
 import UploadPage from './pages/UploadPage'
+import AnalysisSelection from './pages/AnalysisSelection'
 import VioletRulesPage from './pages/VioletRulesPage'
 import ElementInteraction from './pages/ElementInteraction'
 import CombinedAnalysis from './pages/CombinedAnalysis'
 import UserTesting from './pages/UserTesting'
 
-// Navigation steps for the full flow
+// Navigation steps
 type AppStep =
     | 'upload'
+    | 'analysis-selection'
+    // Option 1: Violet Rules flow
     | 'processing'
     | 'violet-rules'
     | 'violet-accuracy'
-    | 'notice-modal'
+    // Option 2: Element Interaction flow
     | 'element-loading'
     | 'element-interaction'
     | 'element-score'
-    | 'combined-selection'
+    // Option 3: Combined Analysis flow
     | 'combined-loading'
     | 'combined-highlighted'
     | 'combined-preview'
+    // After any flow → User Testing
     | 'permissions'
     | 'recording'
     | 'user-analysis'
@@ -27,6 +31,9 @@ type AppStep =
 export default function App() {
     const [step, setStep] = useState<AppStep>('upload')
     const [uploadedFile, setUploadedFile] = useState<string | null>(null)
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+
+    const goToUserTesting = () => setStep('permissions')
 
     return (
         <div className="app-container">
@@ -43,18 +50,43 @@ export default function App() {
             {/* Main Content */}
             <div className="main-content">
                 <div className="page-enter" key={step}>
-                    {/* Component 1: Upload */}
+
+                    {/* Page 1: Upload */}
                     {step === 'upload' && (
                         <UploadPage
-                            onProcess={(fileName) => {
+                            onProcess={(fileName, imageUrl) => {
                                 setUploadedFile(fileName)
-                                setStep('processing')
-                                setTimeout(() => setStep('violet-rules'), 2500)
+                                setUploadedImageUrl(imageUrl || null)
+                                setStep('analysis-selection')
                             }}
                         />
                     )}
 
-                    {/* Component 1: Processing */}
+                    {/* Page 2: Analysis Selection (image 12) */}
+                    {step === 'analysis-selection' && (
+                        <AnalysisSelection
+                            uploadedFileName={uploadedFile}
+                            uploadedImageUrl={uploadedImageUrl}
+                            onStartAnalysis={(option) => {
+                                switch (option) {
+                                    case 'rules':
+                                        setStep('processing')
+                                        setTimeout(() => setStep('violet-rules'), 2500)
+                                        break
+                                    case 'elements':
+                                        setStep('element-loading')
+                                        setTimeout(() => setStep('element-interaction'), 2500)
+                                        break
+                                    case 'all':
+                                        setStep('combined-loading')
+                                        setTimeout(() => setStep('combined-highlighted'), 2500)
+                                        break
+                                }
+                            }}
+                        />
+                    )}
+
+                    {/* Option 1: Processing → Violet Rules */}
                     {step === 'processing' && (
                         <div className="spinner-container">
                             <div className="spinner" />
@@ -62,46 +94,51 @@ export default function App() {
                         </div>
                     )}
 
-                    {/* Component 1: Violet Rules */}
                     {(step === 'violet-rules' || step === 'violet-accuracy') && (
                         <VioletRulesPage
                             step={step}
                             fileName={uploadedFile}
                             onDone={() => setStep('violet-accuracy')}
-                            onNext={() => setStep('notice-modal')}
+                            onNext={goToUserTesting}
                         />
                     )}
 
-                    {/* Component 2: Notice Modal + Element Interaction */}
-                    {(step === 'notice-modal' || step === 'element-loading' ||
-                        step === 'element-interaction' || step === 'element-score') && (
-                            <ElementInteraction
-                                step={step}
-                                onImportNew={() => setStep('upload')}
-                                onElementInteraction={() => {
-                                    setStep('element-loading')
-                                    setTimeout(() => setStep('element-interaction'), 2500)
-                                }}
-                                onGetScore={() => setStep('element-score')}
-                                onNext={() => setStep('combined-selection')}
-                            />
-                        )}
+                    {/* Option 2: Element Interaction */}
+                    {step === 'element-loading' && (
+                        <div className="spinner-container">
+                            <div className="spinner" />
+                            <div className="spinner-text">Loading<br />Element Interaction</div>
+                        </div>
+                    )}
 
-                    {/* Component 3: Combined Analysis */}
-                    {(step === 'combined-selection' || step === 'combined-loading' ||
-                        step === 'combined-highlighted' || step === 'combined-preview') && (
-                            <CombinedAnalysis
-                                step={step}
-                                onStartAnalysis={() => {
-                                    setStep('combined-loading')
-                                    setTimeout(() => setStep('combined-highlighted'), 2500)
-                                }}
-                                onGenerateClean={() => setStep('combined-preview')}
-                                onNext={() => setStep('permissions')}
-                            />
-                        )}
+                    {(step === 'element-interaction' || step === 'element-score') && (
+                        <ElementInteraction
+                            step={step}
+                            onImportNew={() => setStep('upload')}
+                            onElementInteraction={() => { }}
+                            onGetScore={() => setStep('element-score')}
+                            onNext={goToUserTesting}
+                        />
+                    )}
 
-                    {/* Component 4: User Testing */}
+                    {/* Option 3: Combined Analysis */}
+                    {step === 'combined-loading' && (
+                        <div className="spinner-container">
+                            <div className="spinner" />
+                            <div className="spinner-text">Loading<br />Combined Analysis</div>
+                        </div>
+                    )}
+
+                    {(step === 'combined-highlighted' || step === 'combined-preview') && (
+                        <CombinedAnalysis
+                            step={step}
+                            onStartAnalysis={() => { }}
+                            onGenerateClean={() => setStep('combined-preview')}
+                            onNext={goToUserTesting}
+                        />
+                    )}
+
+                    {/* User Testing (after any flow) */}
                     {(step === 'permissions' || step === 'recording' ||
                         step === 'user-analysis' || step === 'user-results') && (
                             <UserTesting

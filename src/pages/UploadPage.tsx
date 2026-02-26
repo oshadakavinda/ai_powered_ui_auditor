@@ -1,14 +1,14 @@
 import { useState, useRef, useCallback } from 'react'
 
 interface UploadPageProps {
-    onProcess: (fileName: string) => void
+    onProcess: (fileName: string, imageUrl?: string) => void
 }
 
 export default function UploadPage({ onProcess }: UploadPageProps) {
     const [activeTab, setActiveTab] = useState<'interface' | 'code'>('interface')
     const [category, setCategory] = useState('')
     const [url, setUrl] = useState('https://www.figma.com/design/...')
-    const [file, setFile] = useState<{ name: string; size: string; progress: number } | null>(null)
+    const [file, setFile] = useState<{ name: string; size: string; progress: number; imageUrl?: string } | null>(null)
     const [dragOver, setDragOver] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -16,16 +16,22 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
         e.preventDefault()
         setDragOver(false)
         const f = e.dataTransfer.files[0]
-        if (f) simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(0)}MB`)
+        if (f) {
+            const imageUrl = f.type.startsWith('image/') ? URL.createObjectURL(f) : undefined
+            simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(0)}MB`, imageUrl)
+        }
     }, [])
 
     const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0]
-        if (f) simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(0)}MB`)
+        if (f) {
+            const imageUrl = f.type.startsWith('image/') ? URL.createObjectURL(f) : undefined
+            simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(0)}MB`, imageUrl)
+        }
     }, [])
 
-    const simulateUpload = (name: string, size: string) => {
-        setFile({ name, size, progress: 0 })
+    const simulateUpload = (name: string, size: string, imageUrl?: string) => {
+        setFile({ name, size, progress: 0, imageUrl })
         let progress = 0
         const interval = setInterval(() => {
             progress += Math.random() * 15 + 5
@@ -187,7 +193,7 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
             <div className="footer-actions">
                 <button
                     className="btn btn-primary btn-primary-lg"
-                    onClick={() => onProcess(file?.name || 'Design File')}
+                    onClick={() => onProcess(file?.name || 'Design File', file?.imageUrl)}
                     style={{ opacity: file && file.progress >= 100 ? 1 : 0.5 }}
                     disabled={!file || file.progress < 100}
                 >
