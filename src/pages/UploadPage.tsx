@@ -1,13 +1,20 @@
 import { useState, useRef, useCallback } from 'react'
 
 interface UploadPageProps {
-    onProcess: (fileName: string, imageUrl?: string) => void
+    onProcess: (data: { 
+        fileName: string; 
+        imageUrl?: string; 
+        figmaUrl: string; 
+        gitRepoUrl: string; 
+        category: string;
+    }) => void
 }
 
 export default function UploadPage({ onProcess }: UploadPageProps) {
     const [activeTab, setActiveTab] = useState<'interface' | 'code'>('interface')
-    const [category, setCategory] = useState('')
-    const [url, setUrl] = useState('https://www.figma.com/design/...')
+    const [category, setCategory] = useState('universal')
+    const [figmaUrl, setFigmaUrl] = useState('https://www.figma.com/design/...')
+    const [gitRepoUrl, setGitRepoUrl] = useState('https://github.com/...')
     const [file, setFile] = useState<{ name: string; size: string; progress: number; imageUrl?: string } | null>(null)
     const [dragOver, setDragOver] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -113,13 +120,13 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
 
                     {/* URL Input */}
                     <div>
-                        <label style={{ fontWeight: 600, fontSize: 'var(--font-sm)', marginBottom: 'var(--space-2)', display: 'block' }}>Import from URL</label>
+                        <label style={{ fontWeight: 600, fontSize: 'var(--font-sm)', marginBottom: 'var(--space-2)', display: 'block' }}>Import from Figma URL</label>
                         <div className="url-input-group">
                             <input
                                 className="url-input"
-                                value={url}
-                                onChange={(e) => setUrl(e.target.value)}
-                                placeholder="Paste Figma or design URL..."
+                                value={figmaUrl}
+                                onChange={(e) => setFigmaUrl(e.target.value)}
+                                placeholder="Paste Figma design URL..."
                             />
                             <button
                                 className="btn btn-primary"
@@ -135,37 +142,39 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
                 <div style={{
                     background: '#1e1e1e',
                     borderRadius: 'var(--radius-lg)',
-                    overflow: 'hidden',
+                    padding: '24px',
                     height: 350,
                     display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '24px'
                 }}>
-                    {/* File Explorer */}
-                    <div style={{ width: 240, borderRight: '1px solid #333', padding: '12px', overflowY: 'auto' }}>
-                        <div style={{ color: '#ccc', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Explorer</div>
-                        <div style={{ color: '#e0e0e0', fontSize: '13px' }}>
-                            <div style={{ padding: '3px 0' }}>▾ <strong>MY-PROJECT</strong></div>
-                            {['src/', 'components/', 'pages/', 'styles/', 'utils/', 'App.tsx', 'index.tsx', 'package.json'].map(f => (
-                                <div key={f} style={{ padding: '2px 0 2px 16px', color: '#aaa', cursor: 'pointer' }}>{f}</div>
-                            ))}
+                    <div className="upload-zone__icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green-primary)" strokeWidth="2">
+                            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />
+                        </svg>
+                    </div>
+                    <div style={{ width: '100%', maxWidth: '500px' }}>
+                        <label style={{ color: '#ccc', fontWeight: 600, fontSize: 'var(--font-sm)', marginBottom: 'var(--space-2)', display: 'block' }}>Import from Git Repository</label>
+                        <div className="url-input-group">
+                            <input
+                                className="url-input"
+                                style={{ background: '#2d2d2d', borderColor: '#444' }}
+                                value={gitRepoUrl}
+                                onChange={(e) => setGitRepoUrl(e.target.value)}
+                                placeholder="Paste repository URL (GitHub/GitLab)..."
+                            />
+                            <button
+                                className="btn"
+                                style={{ background: 'var(--green-primary)', color: 'white' }}
+                                onClick={() => simulateUpload('Code from Repository', '2MB')}
+                            >
+                                Import
+                            </button>
                         </div>
                     </div>
-                    {/* Code View */}
-                    <div style={{ flex: 1, padding: '16px', color: '#d4d4d4', fontSize: '13px', fontFamily: 'monospace', lineHeight: 1.6, overflowY: 'auto' }}>
-                        <div><span style={{ color: '#608b4e' }}>{'// Main application component'}</span></div>
-                        <div><span style={{ color: '#569cd6' }}>import</span> React <span style={{ color: '#569cd6' }}>from</span> <span style={{ color: '#ce9178' }}>'react'</span>;</div>
-                        <div><span style={{ color: '#569cd6' }}>import</span> {'{ useState }'} <span style={{ color: '#569cd6' }}>from</span> <span style={{ color: '#ce9178' }}>'react'</span>;</div>
-                        <div />
-                        <div><span style={{ color: '#569cd6' }}>export default function</span> <span style={{ color: '#dcdcaa' }}>App</span>() {'{'}</div>
-                        <div>  <span style={{ color: '#569cd6' }}>const</span> [state, setState] = <span style={{ color: '#dcdcaa' }}>useState</span>({'{}'});</div>
-                        <div />
-                        <div>  <span style={{ color: '#569cd6' }}>return</span> (</div>
-                        <div>    {'<'}<span style={{ color: '#4ec9b0' }}>div</span> className=<span style={{ color: '#ce9178' }}>"app"</span>{'>'}</div>
-                        <div>      {'<'}<span style={{ color: '#4ec9b0' }}>Header</span> /{'>'}</div>
-                        <div>      {'<'}<span style={{ color: '#4ec9b0' }}>MainContent</span> /{'>'}</div>
-                        <div>    {'</'}<span style={{ color: '#4ec9b0' }}>div</span>{'>'}</div>
-                        <div>  );</div>
-                        <div>{'}'}</div>
-                    </div>
+                    <p style={{ color: '#666', fontSize: '12px' }}>Analyzing the codebase for UI patterns and rule compliance.</p>
                 </div>
             )}
 
@@ -193,9 +202,14 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
             <div className="footer-actions">
                 <button
                     className="btn btn-primary btn-primary-lg"
-                    onClick={() => onProcess(file?.name || 'Design File', file?.imageUrl)}
-                    style={{ opacity: file && file.progress >= 100 ? 1 : 0.5 }}
-                    disabled={!file || file.progress < 100}
+                    onClick={() => onProcess({
+                        fileName: file?.name || 'Design File',
+                        imageUrl: file?.imageUrl,
+                        figmaUrl,
+                        gitRepoUrl,
+                        category
+                    })}
+                    style={{ opacity: (file && file.progress >= 100) || figmaUrl.includes('figma.com') ? 1 : 0.5 }}
                 >
                     Process Interfaces
                 </button>

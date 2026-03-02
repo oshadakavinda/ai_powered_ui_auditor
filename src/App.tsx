@@ -32,6 +32,47 @@ export default function App() {
     const [step, setStep] = useState<AppStep>('upload')
     const [uploadedFile, setUploadedFile] = useState<string | null>(null)
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
+    
+    // New states for AI Audit
+    const [figmaUrl, setFigmaUrl] = useState<string>('')
+    const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
+    const [category, setCategory] = useState<string>('universal')
+    const [auditResult, setAuditResult] = useState<any>(null)
+
+    const handleProcess = async (option: 'rules' | 'elements' | 'all') => {
+        switch (option) {
+            case 'rules':
+                setStep('processing')
+                try {
+                    const response = await fetch('http://localhost:8000/audit/url', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            figma_url: figmaUrl,
+                            git_repo_url: gitRepoUrl,
+                            profile: category || 'universal'
+                        })
+                    })
+                    const data = await response.json()
+                    setAuditResult(data)
+                    setStep('violet-rules')
+                } catch (error) {
+                    console.error('Audit failed:', error)
+                    // Fallback or error state
+                    setStep('upload')
+                    alert('Audit failed. Please ensure the server is running.')
+                }
+                break
+            case 'elements':
+                setStep('element-loading')
+                setTimeout(() => setStep('element-interaction'), 2500)
+                break
+            case 'all':
+                setStep('combined-loading')
+                setTimeout(() => setStep('combined-highlighted'), 2500)
+                break
+        }
+    }
 
     const goToUserTesting = () => setStep('permissions')
 
@@ -54,35 +95,23 @@ export default function App() {
                     {/* Page 1: Upload */}
                     {step === 'upload' && (
                         <UploadPage
-                            onProcess={(fileName, imageUrl) => {
-                                setUploadedFile(fileName)
-                                setUploadedImageUrl(imageUrl || null)
+                            onProcess={(data) => {
+                                setUploadedFile(data.fileName)
+                                setUploadedImageUrl(data.imageUrl || null)
+                                setFigmaUrl(data.figmaUrl || '')
+                                setGitRepoUrl(data.gitRepoUrl || '')
+                                setCategory(data.category || 'universal')
                                 setStep('analysis-selection')
                             }}
                         />
                     )}
 
-                    {/* Page 2: Analysis Selection (image 12) */}
+                    {/* Page 2: Analysis Selection */}
                     {step === 'analysis-selection' && (
                         <AnalysisSelection
                             uploadedFileName={uploadedFile}
                             uploadedImageUrl={uploadedImageUrl}
-                            onStartAnalysis={(option) => {
-                                switch (option) {
-                                    case 'rules':
-                                        setStep('processing')
-                                        setTimeout(() => setStep('violet-rules'), 2500)
-                                        break
-                                    case 'elements':
-                                        setStep('element-loading')
-                                        setTimeout(() => setStep('element-interaction'), 2500)
-                                        break
-                                    case 'all':
-                                        setStep('combined-loading')
-                                        setTimeout(() => setStep('combined-highlighted'), 2500)
-                                        break
-                                }
-                            }}
+                            onStartAnalysis={handleProcess}
                         />
                     )}
 
@@ -98,6 +127,7 @@ export default function App() {
                         <VioletRulesPage
                             step={step}
                             fileName={uploadedFile}
+                            auditResult={auditResult}
                             onDone={() => setStep('violet-accuracy')}
                             onNext={goToUserTesting}
                         />
