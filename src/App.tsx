@@ -6,10 +6,12 @@ import ElementInteraction from './pages/ElementInteraction'
 import CombinedAnalysis from './pages/CombinedAnalysis'
 import UserTesting from './pages/UserTesting'
 import HomePage from './pages/HomePage'
+import ElementAuditPage from './pages/ElementAuditPage'
 
 // Navigation steps
 type AppStep =
     | 'home'
+    | 'element-audit'
     | 'upload'
     | 'analysis-selection'
     // Option 1: Violet Rules flow
@@ -35,7 +37,7 @@ export default function App() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [uploadedFile, setUploadedFile] = useState<string | null>(null)
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
-    
+
     // New states for AI Audit
     const [figmaUrl, setFigmaUrl] = useState<string>('')
     const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
@@ -90,7 +92,7 @@ export default function App() {
                 </div>
 
                 <div className="title-bar__menu-container">
-                    <button 
+                    <button
                         className="title-bar__menu-btn"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
                     >
@@ -108,6 +110,9 @@ export default function App() {
                             </button>
                             <button className="menu-item" onClick={() => { setStep('upload'); setIsMenuOpen(false); }}>
                                 <span className="menu-item__icon">🎨</span> AI Audit
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('element-audit'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🔍</span> UI Element Auditor
                             </button>
                             <button className="menu-item" onClick={() => { setStep('permissions'); setIsMenuOpen(false); }}>
                                 <span className="menu-item__icon">📹</span> User Testing
@@ -129,7 +134,12 @@ export default function App() {
 
                     {/* Page 0: Home */}
                     {step === 'home' && (
-                        <HomePage onNavigate={(target) => setStep(target)} />
+                        <HomePage onNavigate={(target) => setStep(target as AppStep)} />
+                    )}
+
+                    {/* UI Element Auditor */}
+                    {step === 'element-audit' && (
+                        <ElementAuditPage onBack={() => setStep('home')} />
                     )}
 
                     {/* Page 1: Upload */}

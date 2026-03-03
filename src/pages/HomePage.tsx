@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface HomePageProps {
-    onNavigate: (step: 'upload' | 'permissions') => void;
+    onNavigate: (step: 'upload' | 'element-audit' | 'permissions') => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
@@ -18,6 +18,15 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                         Upload Figma URLs and Git repositories to analyze UI consistency and violations.
                     </p>
                     <button className="btn btn-primary">Start Audit</button>
+                </div>
+
+                <div className="feature-card" onClick={() => onNavigate('element-audit')}>
+                    <div className="feature-card__icon">🔍</div>
+                    <h3 className="feature-card__title">UI Element Auditor</h3>
+                    <p className="feature-card__desc">
+                        Upload a screenshot to detect and score individual UI elements against expert design patterns.
+                    </p>
+                    <button className="btn btn-primary">Start Element Audit</button>
                 </div>
 
                 <div className="feature-card" onClick={() => onNavigate('permissions')}>
