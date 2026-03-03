@@ -11,6 +11,9 @@ def audit_url(request: UrlAuditRequest):
     and returns a structured violation report.
     """
     try:
+        print(f"\n--- [API POST /audit/url] ---")
+        print(f"Request Data: Figma={request.figma_url}, Repo={request.git_repo_url}, Profile={request.profile}")
+        
         result = run_url_audit(
             figma_url=request.figma_url,
             git_repo_url=request.git_repo_url,
@@ -18,8 +21,10 @@ def audit_url(request: UrlAuditRequest):
         )
         
         if "error" in result:
+            print(f"Audit Error: {result['error']}")
             raise HTTPException(status_code=500, detail=result["error"])
             
+        print(f"Response Summary: Found {len(result.get('violations', []))} violations")
         return result
     except Exception as e:
         print(f"Server Error during URL audit: {e}")

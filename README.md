@@ -13,6 +13,7 @@ A modern Electron desktop app that analyzes user interface designs using heurist
 - Import from URL (Figma, direct links)
 - Code repository upload with VS Code-style file explorer preview
 - Upload progress tracking with percentage indicator
+- Persistent Navigation: Hamburger menu for quick access to Home, AI Audit, and User Testing
 
 ### 📋 UI & Violation Rules Analysis
 - Evaluates designs against established UI heuristics (Visual Hierarchy, Contrast Ratio, Rule of Proximity, 60-30-10 Rule, etc.)
@@ -103,11 +104,19 @@ npm install
 
 ### Development
 
+#### 1. Frontend (Electron App)
 ```bash
+npm install
 npm run dev
 ```
+This starts the Vite dev server and launches the Electron desktop application automatically.
 
-This starts the Vite dev server on `http://localhost:5173` and launches the Electron window automatically.
+#### 2. Backend (AI Server)
+```bash
+pip install -r server/requirements.txt
+python3 -m uvicorn server.main:app --reload --port 8000
+```
+This starts the FastAPI server required for AI auditing and analysis features.
 
 ### Production Build
 

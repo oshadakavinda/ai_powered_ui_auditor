@@ -18,6 +18,7 @@ from ultralytics import YOLO, settings
 from ctransformers import AutoModelForCausalLM
 from SMARTUI_RL.rule_engine import RuleEngine
 from SMARTUI_RL.audit_utils import analyze_element_content, _get_reader
+from SMARTUI_RL.rl_feedback import FeedbackLearner
 
 # --- STABILITY SETTINGS ---
 # Prevent OpenMP and Threading conflicts on macOS
@@ -35,7 +36,8 @@ except Exception as e:
 models = {
     "vision": None,
     "llm": None,
-    "engine": None
+    "engine": None,
+    "rl": None
 }
 
 # Pre-resolve paths
@@ -72,6 +74,12 @@ def get_engine():
         models["engine"] = RuleEngine(excel_file=EXCEL_PATH)
     return models["engine"]
 
+def get_rl():
+    """Lazy loader for RL Feedback Learner."""
+    if models["rl"] is None:
+        models["rl"] = FeedbackLearner(memory_file=os.path.join(BASE_DIR, "rl_memory.json"))
+    return models["rl"]
+
 def run_smart_audit(image_path: str, profile: str = "universal") -> dict:
     """
     Runs the full SMARTUI_RL audit pipeline on a single image.
@@ -82,6 +90,7 @@ def run_smart_audit(image_path: str, profile: str = "universal") -> dict:
     """
     engine = get_engine()
     vision_model = get_vision_model()
+    rl = get_rl()
 
     if not vision_model:
         return {"error": "Vision model could not be initialized"}
@@ -142,27 +151,40 @@ def run_smart_audit(image_path: str, profile: str = "universal") -> dict:
         status = "PASS"
 
         # --- Rule Checks ---
+        print(f"   📋 Checking rules for {cls_id} (Status: {status})...")
         # 1. Size Check
         if cls_id == 0: # Button
             if height < MIN_BTN:
-                desc = f"Button '{text_found}' is too small ({height}px vs {MIN_BTN}px)."
-                issues.append({"rule": "min_button_height", "desc": desc})
-                stats["violations_list"].append(desc)
-                status = "FAIL"
+                if rl.should_flag_violation(profile, "min_button_height"):
+                    desc = f"Button '{text_found}' is too small ({height}px vs {MIN_BTN}px)."
+                    issues.append({"rule": "min_button_height", "desc": desc})
+                    stats["violations_list"].append(desc)
+                    status = "FAIL"
+                    print(f"      ❌ Violation: min_button_height (Confirmed by RL)")
+                else:
+                    print(f"      🛡️ Violation filtered out by RL for min_button_height")
             
             # 2. Contrast Check
             if contrast and contrast < 4.5:
-                desc = f"Accessibility: Button '{text_found}' has low contrast ({contrast}:1). Hard to read."
-                issues.append({"rule": "contrast_ratio", "desc": desc})
-                stats["violations_list"].append(desc)
-                status = "FAIL"
+                if rl.should_flag_violation(profile, "contrast_ratio"):
+                    desc = f"Accessibility: Button '{text_found}' has low contrast ({contrast}:1). Hard to read."
+                    issues.append({"rule": "contrast_ratio", "desc": desc})
+                    stats["violations_list"].append(desc)
+                    status = "FAIL"
+                    print(f"      ❌ Violation: contrast_ratio (Confirmed by RL)")
+                else:
+                    print(f"      🛡️ Violation filtered out by RL for contrast_ratio")
         
         elif cls_id == 2: # Field/Input
             if height < MIN_FIELD:
-                desc = f"Input '{text_found}' is too small ({height}px vs {MIN_FIELD}px)."
-                issues.append({"rule": "min_field_height", "desc": desc})
-                stats["violations_list"].append(desc)
-                status = "FAIL"
+                if rl.should_flag_violation(profile, "min_field_height"):
+                    desc = f"Input '{text_found}' is too small ({height}px vs {MIN_FIELD}px)."
+                    issues.append({"rule": "min_field_height", "desc": desc})
+                    stats["violations_list"].append(desc)
+                    status = "FAIL"
+                    print(f"      ❌ Violation: min_field_height (Confirmed by RL)")
+                else:
+                    print(f"      🛡️ Violation filtered out by RL for min_field_height")
 
         elements.append({
             "id": i,
@@ -206,13 +228,19 @@ Task: Explain why these errors matter for {profile}. Mention the Policies if rel
             llm_analysis = f"Error during AI analysis: {str(e)}"
 
     # Final Report
+    score = max(0, 100 - (num_violations * 10))
+    print(f"\n--- [Final Audit Summary] ---")
+    print(f"Violations: {num_violations}")
+    print(f"Calculated Score: {score}")
+    print(f"LLM Analysis Length: {len(llm_analysis)} chars")
+
     report = {
         "meta": {
             "profile": profile,
             "timestamp": str(np.datetime64('now'))
         },
         "summary": {
-            "score": max(0, 100 - (num_violations * 10)),
+            "score": score,
             "violations": num_violations
         },
         "elements": elements,

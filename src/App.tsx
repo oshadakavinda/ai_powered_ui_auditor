@@ -5,9 +5,13 @@ import VioletRulesPage from './pages/VioletRulesPage'
 import ElementInteraction from './pages/ElementInteraction'
 import CombinedAnalysis from './pages/CombinedAnalysis'
 import UserTesting from './pages/UserTesting'
+import HomePage from './pages/HomePage'
+import ElementAuditPage from './pages/ElementAuditPage'
 
 // Navigation steps
 type AppStep =
+    | 'home'
+    | 'element-audit'
     | 'upload'
     | 'analysis-selection'
     // Option 1: Violet Rules flow
@@ -29,10 +33,11 @@ type AppStep =
     | 'user-results'
 
 export default function App() {
-    const [step, setStep] = useState<AppStep>('upload')
+    const [step, setStep] = useState<AppStep>('home')
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [uploadedFile, setUploadedFile] = useState<string | null>(null)
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
-    
+
     // New states for AI Audit
     const [figmaUrl, setFigmaUrl] = useState<string>('')
     const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
@@ -44,21 +49,38 @@ export default function App() {
             case 'rules':
                 setStep('processing')
                 try {
-                    const response = await fetch('http://localhost:8000/audit/url', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            figma_url: figmaUrl,
-                            git_repo_url: gitRepoUrl,
-                            profile: category || 'universal'
-                        })
-                    })
+                    let response;
+                    const isFigmaDefault = figmaUrl === 'https://www.figma.com/design/...' || !figmaUrl;
+                    
+                    if (uploadedImageUrl && (isFigmaDefault || uploadedImageUrl.startsWith('blob:'))) {
+                        // 🖼️ Image Upload Flow (Actual file uploaded or placeholder used with image)
+                        const blob = await fetch(uploadedImageUrl).then(r => r.blob());
+                        const formData = new FormData();
+                        formData.append('file', blob, uploadedFile || 'design.png');
+                        formData.append('profile', category || 'universal');
+
+                        response = await fetch('http://localhost:8000/audit/smart', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } else {
+                        // 🔗 URL Audit Flow
+                        response = await fetch('http://localhost:8000/audit/url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                figma_url: figmaUrl,
+                                git_repo_url: gitRepoUrl,
+                                profile: category || 'universal'
+                            })
+                        });
+                    }
+
                     const data = await response.json()
                     setAuditResult(data)
                     setStep('violet-rules')
                 } catch (error) {
                     console.error('Audit failed:', error)
-                    // Fallback or error state
                     setStep('upload')
                     alert('Audit failed. Please ensure the server is running.')
                 }
@@ -85,12 +107,57 @@ export default function App() {
                     <div className="title-bar__dot title-bar__dot--minimize" />
                     <div className="title-bar__dot title-bar__dot--maximize" />
                 </div>
+
+                <div className="title-bar__menu-container">
+                    <button
+                        className="title-bar__menu-btn"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        <div className="hamburger">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+
+                    {isMenuOpen && (
+                        <div className="menu-dropdown">
+                            <button className="menu-item" onClick={() => { setStep('home'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🏠</span> Home
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('upload'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🎨</span> AI Audit
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('element-audit'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🔍</span> UI Element Auditor
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('permissions'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">📹</span> User Testing
+                            </button>
+                            <div className="menu-divider"></div>
+                            <button className="menu-item disabled">
+                                <span className="menu-item__icon">⚙️</span> Settings
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <span className="title-bar__text">Smart UI Auditor</span>
             </div>
 
             {/* Main Content */}
             <div className="main-content">
                 <div className="page-enter" key={step}>
+
+                    {/* Page 0: Home */}
+                    {step === 'home' && (
+                        <HomePage onNavigate={(target) => setStep(target as AppStep)} />
+                    )}
+
+                    {/* UI Element Auditor */}
+                    {step === 'element-audit' && (
+                        <ElementAuditPage onBack={() => setStep('home')} />
+                    )}
 
                     {/* Page 1: Upload */}
                     {step === 'upload' && (

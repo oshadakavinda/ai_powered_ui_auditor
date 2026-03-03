@@ -19,11 +19,13 @@ const MOCK_RULES = [
 
 export default function VioletRulesPage({ step, fileName, auditResult, onDone, onNext }: VioletRulesPageProps) {
     const [showModal, setShowModal] = useState(false)
-    const [selectedRule, setSelectedRule] = useState<number | null>(null)
+    const [selectedRule, setSelectedRule] = useState<any>(null)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-    // Use dynamic results if available, otherwise fallback to mocks
-    const currentRules = auditResult?.violations?.length > 0 
-        ? auditResult.violations 
+    // Use dynamic results if available. Only fallback to mocks if NO audit has been run.
+    const hasRunAudit = !!auditResult;
+    const currentRules = hasRunAudit 
+        ? (auditResult.violations || []) 
         : MOCK_RULES
 
     const violatedRules = currentRules.filter((r: any) => r.violated)
@@ -32,32 +34,77 @@ export default function VioletRulesPage({ step, fileName, auditResult, onDone, o
 
     const displayRules = step === 'violet-accuracy' ? violatedRules : currentRules
 
+    const handleFeedback = async (agreed: boolean) => {
+        if (!selectedRule) return
+        
+        setIsSubmitting(true)
+        try {
+            await fetch('http://localhost:8000/audit/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profile: auditResult?.meta?.profile || 'universal',
+                    rule_name: selectedRule.rule || selectedRule.title.toLowerCase().replace(/ /g, '_'),
+                    feedback: agreed ? 1 : -1
+                })
+            })
+            setShowModal(false)
+        } catch (error) {
+            console.error('Failed to submit feedback:', error)
+            setShowModal(false)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleExport = async () => {
+        try {
+            const response = await fetch('http://localhost:8000/audit/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(auditResult)
+            })
+            const blob = await response.blob()
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `audit_report_${Date.now()}.md`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+        } catch (error) {
+            console.error('Export failed:', error)
+            alert('Export failed. Please ensure the server is running.')
+        }
+    }
+
     return (
         <div>
             <h1 className="page-heading">Violet Rules</h1>
 
             {/* Rule Cards */}
-            {displayRules.map((rule: any) => (
-                <div
-                    key={rule.id}
-                    className="rule-card"
-                    onClick={() => {
-                        setSelectedRule(rule.id)
-                        setShowModal(true)
-                    }}
-                >
-                    <div className="rule-card__title">{rule.title}</div>
-                    <div className="rule-card__description">{rule.description}</div>
-                </div>
-            ))}
-
-            {/* File reference */}
-            {step === 'violet-rules' && fileName && (
-                <div className="rule-card" style={{ opacity: 0.7, cursor: 'default' }}>
-                    <div className="rule-card__title">{fileName}</div>
-                    <div className="rule-card__description">1 minute left</div>
+            {displayRules.length > 0 ? (
+                displayRules.map((rule: any) => (
+                    <div
+                        key={rule.id}
+                        className="rule-card"
+                        onClick={() => {
+                            setSelectedRule(rule)
+                            setShowModal(true)
+                        }}
+                    >
+                        <div className="rule-card__title">{rule.title || rule.rule}</div>
+                        <div className="rule-card__description">{rule.description || rule.desc}</div>
+                    </div>
+                ))
+            ) : hasRunAudit && (
+                <div className="card card-green text-center" style={{ padding: 'var(--space-12)' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: 'var(--space-4)' }}>✅</div>
+                    <h3 className="feature-card__title">No Violations Found</h3>
+                    <p className="feature-card__desc">The AI model analyzed the interface and found no rule violations. Great job!</p>
                 </div>
             )}
+
 
             {/* Accuracy Section (step 2) */}
             {step === 'violet-accuracy' && (
@@ -68,7 +115,7 @@ export default function VioletRulesPage({ step, fileName, auditResult, onDone, o
                     </div>
                     <div className="export-row">
                         <span className="export-row__label">Export Detailed Report</span>
-                        <button className="btn btn-primary">Export Report</button>
+                        <button className="btn btn-primary" onClick={handleExport}>Export Report</button>
                     </div>
                 </div>
             )}
@@ -90,11 +137,23 @@ export default function VioletRulesPage({ step, fileName, auditResult, onDone, o
                     <div className="modal" onClick={e => e.stopPropagation()}>
                         <h2 className="modal__title">Violet Rules</h2>
                         <p className="modal__body">
-                            Do you agree with this finding?" Please confirm if the detected rule violation matches your experience during the session.
+                            Do you agree with this finding? Please confirm if the detected rule violation matches your experience.
                         </p>
                         <div className="modal__actions">
-                            <button className="btn btn-primary btn-primary-lg" onClick={() => setShowModal(false)}>Yes</button>
-                            <button className="btn btn-outline btn-primary-lg" onClick={() => setShowModal(false)}>No</button>
+                            <button 
+                                className="btn btn-primary btn-primary-lg" 
+                                onClick={() => handleFeedback(true)}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? '...' : 'Yes'}
+                            </button>
+                            <button 
+                                className="btn btn-outline btn-primary-lg" 
+                                onClick={() => handleFeedback(false)}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? '...' : 'No'}
+                            </button>
                         </div>
                     </div>
                 </div>
