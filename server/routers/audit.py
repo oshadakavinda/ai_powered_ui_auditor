@@ -6,6 +6,7 @@ from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 
 from server.config import UPLOAD_DIR
+from server.services.auditor import run_audit
 from server.services.smartui_auditor import run_smart_image_audit
 
 router = APIRouter(prefix="/audit", tags=["audit"])
