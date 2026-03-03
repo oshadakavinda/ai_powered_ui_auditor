@@ -11,6 +11,8 @@ UPLOAD_DIR = SERVER_DIR / "uploads"
 # Weights directory for ML model files
 WEIGHTS_DIR = SERVER_DIR / "weights"
 
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDm5F7atGhawjzpk_9DANLN0_bIAS98NFo")
+
 # Asset file paths
 FAISS_INDEX_PATH = SERVER_DIR / "expert_style_index.bin"
 IMAGE_PATHS_FILE = SERVER_DIR / "image_paths.txt"

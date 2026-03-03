@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface HomePageProps {
-    onNavigate: (step: 'upload' | 'element-audit' | 'permissions') => void;
+    onNavigate: (step: 'upload' | 'element-audit' | 'permissions' | 'ui-enhancer') => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     return (
         <div className="home-page">
             <h1 className="page-heading">Welcome to Smart UI Auditor</h1>
-            <p className="page-subheading">Select a feature to get started with your UI analysis.</p>
+          
 
             <div className="feature-grid">
                 <div className="feature-card" onClick={() => onNavigate('upload')}>
@@ -17,7 +17,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <p className="feature-card__desc">
                         Upload Figma URLs and Git repositories to analyze UI consistency and violations.
                     </p>
-                    <button className="btn btn-primary">Start Audit</button>
+                    <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Audit</button>
                 </div>
 
                 <div className="feature-card" onClick={() => onNavigate('element-audit')}>
@@ -26,7 +26,16 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <p className="feature-card__desc">
                         Upload a screenshot to detect and score individual UI elements against expert design patterns.
                     </p>
-                    <button className="btn btn-primary">Start Element Audit</button>
+                    <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Element Audit</button>
+                </div>
+
+                <div className="feature-card" onClick={() => onNavigate('ui-enhancer')}>
+                    <div className="feature-card__icon">✨</div>
+                    <h3 className="feature-card__title">Improved UI Generator</h3>
+                    <p className="feature-card__desc">
+                        Generate improved UI designs from screenshots based on AI feedback and design principles.
+                    </p>
+                    <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Generator</button>
                 </div>
 
                 <div className="feature-card" onClick={() => onNavigate('permissions')}>
@@ -35,16 +44,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <p className="feature-card__desc">
                         Record user sessions and screen interactions to identify usability issues.
                     </p>
-                    <button className="btn btn-primary">Start Testing</button>
-                </div>
-
-                <div className="feature-card disabled">
-                    <div className="feature-card__icon">⚙️</div>
-                    <h3 className="feature-card__title">More Options</h3>
-                    <p className="feature-card__desc">
-                        Additional analysis features and configurations will be available soon.
-                    </p>
-                    <button className="btn btn-outline" disabled>Coming Soon</button>
+                    <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Testing</button>
                 </div>
             </div>
         </div>

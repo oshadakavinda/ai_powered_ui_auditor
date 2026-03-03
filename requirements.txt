@@ -4,6 +4,7 @@ python-multipart
 torch
 torchvision
 ultralytics
+google-genai
 git+https://github.com/openai/CLIP.git
 faiss-cpu
 opencv-python
