@@ -49,21 +49,38 @@ export default function App() {
             case 'rules':
                 setStep('processing')
                 try {
-                    const response = await fetch('http://localhost:8000/audit/url', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            figma_url: figmaUrl,
-                            git_repo_url: gitRepoUrl,
-                            profile: category || 'universal'
-                        })
-                    })
+                    let response;
+                    const isFigmaDefault = figmaUrl === 'https://www.figma.com/design/...' || !figmaUrl;
+                    
+                    if (uploadedImageUrl && (isFigmaDefault || uploadedImageUrl.startsWith('blob:'))) {
+                        // 🖼️ Image Upload Flow (Actual file uploaded or placeholder used with image)
+                        const blob = await fetch(uploadedImageUrl).then(r => r.blob());
+                        const formData = new FormData();
+                        formData.append('file', blob, uploadedFile || 'design.png');
+                        formData.append('profile', category || 'universal');
+
+                        response = await fetch('http://localhost:8000/audit/smart', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } else {
+                        // 🔗 URL Audit Flow
+                        response = await fetch('http://localhost:8000/audit/url', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                figma_url: figmaUrl,
+                                git_repo_url: gitRepoUrl,
+                                profile: category || 'universal'
+                            })
+                        });
+                    }
+
                     const data = await response.json()
                     setAuditResult(data)
                     setStep('violet-rules')
                 } catch (error) {
                     console.error('Audit failed:', error)
-                    // Fallback or error state
                     setStep('upload')
                     alert('Audit failed. Please ensure the server is running.')
                 }

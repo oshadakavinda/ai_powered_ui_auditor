@@ -6,37 +6,41 @@ from server.config import SMARTUI_RL_DIR, UPLOAD_DIR
 def run_url_audit(figma_url: str, git_repo_url: str, profile: str = "universal") -> Dict[str, Any]:
     """
     Orchestrates the UI audit for Figma and Git URLs.
-    
-    1. Resolves Figma URL to an image path (uses test image for now).
-    2. Runs the SMARTUI_RL AI pipeline.
-    3. Transforms output for the frontend.
     """
-    
     # --- STEP 1: RESOLVE FIGMA URL ---
-    # NOTE: Real Figma integration requiring a Personal Access Token is pending.
-    # For now, we use a test image to demonstrate the AI pipeline flow.
     image_path = str(SMARTUI_RL_DIR / "test1.png")
-    
     if not os.path.exists(image_path):
-        # Fallback to test1.jpg if png doesn't exist
         image_path = str(SMARTUI_RL_DIR / "test1.jpg")
 
     # --- STEP 2: RUN AI AUDIT ---
-    print(f"🚀 Starting AI Audit for: {figma_url}")
+    print(f"🤖 Calling SMARTUI_RL Model Pipeline...")
     raw_result = run_smart_audit(image_path, profile)
 
     if "error" in raw_result:
+        print(f"❌ AI Model Error: {raw_result['error']}")
         return raw_result
 
-    # --- STEP 3: TRANSFORM FOR FRONTEND ---
-    # Map AI issues to a format compatible with VioletRulesPage
+    return _transform_audit_result(raw_result, profile, figma_url, git_repo_url)
+
+def run_smart_image_audit(image_path: str, profile: str = "universal") -> Dict[str, Any]:
+    """
+    Runs the AI audit pipeline on an uploaded image file.
+    """
+    print(f"🤖 Calling SMARTUI_RL Model for uploaded image...")
+    raw_result = run_smart_audit(image_path, profile)
+
+    if "error" in raw_result:
+        print(f"❌ AI Model Error: {raw_result['error']}")
+        return raw_result
+
+    return _transform_audit_result(raw_result, profile)
+
+def _transform_audit_result(raw_result: Dict[str, Any], profile: str, figma_url: str = None, git_repo_url: str = None) -> Dict[str, Any]:
+    """Common logic to transform raw AI model output for the frontend."""
     transformed_violations = []
     
-    # We can also include some standard heuristics that passed
-    # For now, let's just focus on the real findings from the AI
-    
-    for i, element in enumerate(raw_result.get("elements", [])):
-        for j, issue in enumerate(element.get("issues", [])):
+    for element in raw_result.get("elements", []):
+        for issue in element.get("issues", []):
             transformed_violations.append({
                 "id": len(transformed_violations) + 1,
                 "rule": issue.get("rule", "Unknown"),
@@ -50,14 +54,10 @@ def run_url_audit(figma_url: str, git_repo_url: str, profile: str = "universal")
                 }
             })
 
-    # If no violations found, maybe add some "Pass" markers for standard rules
-    if not transformed_violations:
-        # Dummy pass rules so the page isn't totally empty if everything is perfect
-        pass
-        
     final_response = {
         "meta": {
             **raw_result.get("meta", {}),
+            "profile": profile,
             "figma_url": figma_url,
             "git_repo_url": git_repo_url
         },
