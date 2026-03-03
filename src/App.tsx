@@ -7,10 +7,12 @@ import CombinedAnalysis from './pages/CombinedAnalysis'
 import UserTesting from './pages/UserTesting'
 import HomePage from './pages/HomePage'
 import ElementAuditPage from './pages/ElementAuditPage'
+import UIEnhancerPage from './pages/UIEnhancerPage'
 
 // Navigation steps
 type AppStep =
     | 'home'
+    | 'ui-enhancer'
     | 'element-audit'
     | 'upload'
     | 'analysis-selection'
@@ -51,7 +53,7 @@ export default function App() {
                 try {
                     let response;
                     const isFigmaDefault = figmaUrl === 'https://www.figma.com/design/...' || !figmaUrl;
-                    
+
                     if (uploadedImageUrl && (isFigmaDefault || uploadedImageUrl.startsWith('blob:'))) {
                         // 🖼️ Image Upload Flow (Actual file uploaded or placeholder used with image)
                         const blob = await fetch(uploadedImageUrl).then(r => r.blob());
@@ -131,6 +133,9 @@ export default function App() {
                             <button className="menu-item" onClick={() => { setStep('element-audit'); setIsMenuOpen(false); }}>
                                 <span className="menu-item__icon">🔍</span> UI Element Auditor
                             </button>
+                            <button className="menu-item" onClick={() => { setStep('ui-enhancer'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">✨</span> UI Enhancer
+                            </button>
                             <button className="menu-item" onClick={() => { setStep('permissions'); setIsMenuOpen(false); }}>
                                 <span className="menu-item__icon">📹</span> User Testing
                             </button>
@@ -157,6 +162,11 @@ export default function App() {
                     {/* UI Element Auditor */}
                     {step === 'element-audit' && (
                         <ElementAuditPage onBack={() => setStep('home')} />
+                    )}
+
+                    {/* UI Enhancer Page */}
+                    {step === 'ui-enhancer' && (
+                        <UIEnhancerPage onBack={() => setStep('home')} />
                     )}
 
                     {/* Page 1: Upload */}

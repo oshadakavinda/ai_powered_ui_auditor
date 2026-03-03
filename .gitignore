@@ -30,3 +30,13 @@ server/static/uploads/
 
 # Debug Scripts
 yolo_debug.py
+
+# Temporary / Generated Data
+SMARTUI_RL/audit_result.json
+SMARTUI_RL/rl_memory.json
+SMARTUI_RL/__pycache__/
+server/static/uploads/
+*.log
+
+# Debug Scripts
+yolo_debug.py
