@@ -9,3 +9,10 @@ faiss-cpu
 opencv-python
 pillow
 numpy
+requests
+easyocr
+scikit-learn
+pandas
+openpyxl
+ctransformers
+gitpython

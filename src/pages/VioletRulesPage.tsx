@@ -3,11 +3,12 @@ import { useState } from 'react'
 interface VioletRulesPageProps {
     step: 'violet-rules' | 'violet-accuracy'
     fileName: string | null
+    auditResult?: any
     onDone: () => void
     onNext: () => void
 }
 
-const ALL_RULES = [
+const MOCK_RULES = [
     { id: 1, title: 'Visual Hierarchy', description: 'Use size, color, and weight to show importance. The most important thing should be the easiest to see.', violated: true },
     { id: 2, title: 'Contrast Ratio', description: 'Ensure enough contrast between text and background. Aim for at least 4.5:1 for normal text to maintain accessibility.', violated: true },
     { id: 3, title: 'Rule of Proximity', description: 'Place related items close together (e.g., a label next to its input field) so users perceive them as a group.', violated: false },
@@ -16,21 +17,27 @@ const ALL_RULES = [
     { id: 6, title: 'User Control & Freedom', description: 'Always give users an "emergency exit." Let them easily undo, redo, or cancel an action.', violated: true },
 ]
 
-export default function VioletRulesPage({ step, fileName, onDone, onNext }: VioletRulesPageProps) {
+export default function VioletRulesPage({ step, fileName, auditResult, onDone, onNext }: VioletRulesPageProps) {
     const [showModal, setShowModal] = useState(false)
     const [selectedRule, setSelectedRule] = useState<number | null>(null)
 
-    const violatedRules = ALL_RULES.filter(r => r.violated)
-    const accuracy = Math.round((ALL_RULES.filter(r => !r.violated).length / ALL_RULES.length) * 100)
+    // Use dynamic results if available, otherwise fallback to mocks
+    const currentRules = auditResult?.violations?.length > 0 
+        ? auditResult.violations 
+        : MOCK_RULES
 
-    const displayRules = step === 'violet-accuracy' ? violatedRules : ALL_RULES
+    const violatedRules = currentRules.filter((r: any) => r.violated)
+    const accuracy = auditResult?.summary?.score ?? 
+        Math.round((currentRules.filter((r: any) => !r.violated).length / currentRules.length) * 100)
+
+    const displayRules = step === 'violet-accuracy' ? violatedRules : currentRules
 
     return (
         <div>
             <h1 className="page-heading">Violet Rules</h1>
 
             {/* Rule Cards */}
-            {displayRules.map((rule) => (
+            {displayRules.map((rule: any) => (
                 <div
                     key={rule.id}
                     className="rule-card"

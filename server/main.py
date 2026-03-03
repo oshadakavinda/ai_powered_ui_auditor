@@ -1,8 +1,23 @@
+import os
+import sys
+
+# --- VITAL: PREVENT SEGFAULTS ON MACOS (M-SERIES/INTEL) ---
+# These variables MUST be set before importing any ML libraries
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
+import torch
+torch.set_num_threads(1)
+
+import cv2
+cv2.setNumThreads(0)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.config import ensure_upload_dir
-from server.routers import audit, health
+from server.routers import audit, health, url_audit
 
 # ---------------------------------------------------------------------------
 # App factory
@@ -24,6 +39,7 @@ app.add_middleware(
 # Register routers
 app.include_router(audit.router)
 app.include_router(health.router)
+app.include_router(url_audit.router)
 
 # Ensure upload directory exists on startup
 ensure_upload_dir()
