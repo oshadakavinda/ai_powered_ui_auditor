@@ -5,9 +5,11 @@ import VioletRulesPage from './pages/VioletRulesPage'
 import ElementInteraction from './pages/ElementInteraction'
 import CombinedAnalysis from './pages/CombinedAnalysis'
 import UserTesting from './pages/UserTesting'
+import HomePage from './pages/HomePage'
 
 // Navigation steps
 type AppStep =
+    | 'home'
     | 'upload'
     | 'analysis-selection'
     // Option 1: Violet Rules flow
@@ -29,7 +31,8 @@ type AppStep =
     | 'user-results'
 
 export default function App() {
-    const [step, setStep] = useState<AppStep>('upload')
+    const [step, setStep] = useState<AppStep>('home')
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [uploadedFile, setUploadedFile] = useState<string | null>(null)
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
     
@@ -85,12 +88,49 @@ export default function App() {
                     <div className="title-bar__dot title-bar__dot--minimize" />
                     <div className="title-bar__dot title-bar__dot--maximize" />
                 </div>
+
+                <div className="title-bar__menu-container">
+                    <button 
+                        className="title-bar__menu-btn"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        <div className="hamburger">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </button>
+
+                    {isMenuOpen && (
+                        <div className="menu-dropdown">
+                            <button className="menu-item" onClick={() => { setStep('home'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🏠</span> Home
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('upload'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🎨</span> AI Audit
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('permissions'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">📹</span> User Testing
+                            </button>
+                            <div className="menu-divider"></div>
+                            <button className="menu-item disabled">
+                                <span className="menu-item__icon">⚙️</span> Settings
+                            </button>
+                        </div>
+                    )}
+                </div>
+
                 <span className="title-bar__text">Smart UI Auditor</span>
             </div>
 
             {/* Main Content */}
             <div className="main-content">
                 <div className="page-enter" key={step}>
+
+                    {/* Page 0: Home */}
+                    {step === 'home' && (
+                        <HomePage onNavigate={(target) => setStep(target)} />
+                    )}
 
                     {/* Page 1: Upload */}
                     {step === 'upload' && (
