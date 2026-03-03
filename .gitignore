@@ -1,3 +1,32 @@
-node_modules
+# --- Frontend / Node ---
+node_modules/
+dist/
+.DS_Store
 
+# --- Python / Backend ---
+# Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+server/uienv
+# Environments
+.venv/
+venv/
+env/
+
+# Large AI Models (Weights)
+# DO NOT commit these as they are >50MB and >600MB
+SMARTUI_RL/ui_model.pt
+SMARTUI_RL/tinyllama-*.gguf
 server/expert_style_index.bin
+
+# Temporary / Generated Data
+SMARTUI_RL/audit_result.json
+SMARTUI_RL/rl_memory.json
+SMARTUI_RL/__pycache__/
+server/static/uploads/
+*.log
+
+# Debug Scripts
+yolo_debug.py
