@@ -277,6 +277,27 @@ body {
 
 .btn-green-solid:hover { background: var(--green-dark); }
 
+.back-button-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.back-button-circle:hover {
+  background: var(--bg-primary);
+  color: var(--green-primary);
+  border-color: var(--green-primary);
+}
+
 /* --- Cards --- */
 .card {
   background: var(--bg-card);

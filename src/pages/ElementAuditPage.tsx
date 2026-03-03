@@ -25,6 +25,7 @@ interface ElementAuditPageProps {
 }
 
 export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
+    const [category, setCategory] = useState('universal')
     const [auditStep, setAuditStep] = useState<AuditStep>('upload')
     const [result, setResult] = useState<AuditResult | null>(null)
     const [error, setError] = useState<string | null>(null)
@@ -91,11 +92,38 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
     // Upload view
     if (auditStep === 'upload') {
         return (
-            <div className="element-audit">
-                <h1 className="page-heading">UI Element Auditor</h1>
+            <div className="element-audit" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <button
+                        onClick={onBack}
+                        className="back-button-circle"
+                        title="Back to Home"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+                    <h1 className="page-heading" style={{ margin: 0 }}>UI Element Auditor</h1>
+                </div>
                 <p className="page-subheading">
                     Upload a UI screenshot to detect and score individual elements against expert design patterns.
                 </p>
+
+                <div className="toggle-tabs" style={{ marginBottom: '1.5rem' }}>
+                    <select
+                        className="dropdown"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                    >
+                        <option value="universal">Universal Format</option>
+                        <option value="web">Web Application</option>
+                        <option value="mobile">Mobile App</option>
+                        <option value="dashboard">Dashboard</option>
+                        <option value="ecommerce">E-commerce</option>
+                    </select>
+                </div>
 
                 {error && (
                     <div className="audit-error">
@@ -129,12 +157,6 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
                         onChange={handleFileSelect}
                     />
                 </div>
-
-                <div className="footer-actions" style={{ marginTop: '2rem' }}>
-                    <button className="btn btn-outline" onClick={onBack}>
-                        ← Back to Home
-                    </button>
-                </div>
             </div>
         )
     }
@@ -142,12 +164,27 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
     // Processing view
     if (auditStep === 'processing') {
         return (
-            <div className="spinner-container">
-                <div className="spinner" />
-                <div className="spinner-text">Analyzing UI Elements</div>
-                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>
-                    Detecting components and scoring against expert patterns…
-                </p>
+            <div className="element-audit" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <button
+                        onClick={onBack}
+                        className="back-button-circle"
+                        title="Back to Home"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+                    <h1 className="page-heading" style={{ margin: 0 }}>UI Element Auditor</h1>
+                </div>
+                <div className="spinner-container">
+                    <div className="spinner" />
+                    <div className="spinner-text">Analyzing UI Elements</div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>
+                        Detecting components and scoring against expert patterns…
+                    </p>
+                </div>
             </div>
         )
     }
@@ -156,8 +193,20 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
     if (!result) return null
 
     return (
-        <div className="element-audit">
-            <h1 className="page-heading">Audit Results</h1>
+        <div className="element-audit" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button
+                    onClick={onBack}
+                    className="back-button-circle"
+                    title="Back to Home"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+                <h1 className="page-heading" style={{ margin: 0 }}>Audit Results</h1>
+            </div>
 
             {/* Overall Score Section */}
             <div className="audit-overview">
@@ -235,9 +284,6 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
 
             {/* Actions */}
             <div className="footer-actions" style={{ marginTop: 'var(--space-8)' }}>
-                <button className="btn btn-outline" onClick={onBack}>
-                    ← Back to Home
-                </button>
                 <button
                     className="btn btn-primary"
                     onClick={() => {

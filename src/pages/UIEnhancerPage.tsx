@@ -61,11 +61,19 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
 
     return (
         <div className="page-container page-enter">
-            <button className="btn btn-outline" style={{ marginBottom: '1.5rem', alignSelf: 'flex-start' }} onClick={onBack}>
-                ← Back to Home
-            </button>
-
-            <h1 className="page-heading">AI UI Enhancer</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button
+                    onClick={onBack}
+                    className="back-button-circle"
+                    title="Back to Home"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+                <h1 className="page-heading" style={{ margin: 0 }}>AI UI Enhancer</h1>
+            </div>
             <p className="page-subheading">
                 Upload your UI screenshot and audit JSON to get prioritized enhancements and a Midjourney/Stable Diffusion prompt.
             </p>
