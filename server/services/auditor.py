@@ -7,13 +7,30 @@ from server.config import FAISS_INDEX_PATH, IMAGE_PATHS_FILE, UPLOAD_DIR
 from server.services.detector import detect_components
 from server.services.vectorizer import vectorize_crop
 
-# ---------------------------------------------------------------------------
-# Load FAISS index and image-path mapping ONCE at import time
-# ---------------------------------------------------------------------------
-_index = faiss.read_index(str(FAISS_INDEX_PATH))
+# --- INTERNAL STATE (Lazy Loaded) ---
+_models = {
+    "index": None,
+    "image_paths": None
+}
 
-with open(str(IMAGE_PATHS_FILE), "r") as _f:
-    _image_paths = [line.strip() for line in _f.readlines()]
+def _get_models():
+    """Lazy loader for FAISS index and image paths."""
+    if _models["index"] is None:
+        if not os.path.exists(FAISS_INDEX_PATH):
+            print(f"WARNING: FAISS index not found at {FAISS_INDEX_PATH}. Similarity audit will be disabled.")
+            return None, None
+            
+        _models["index"] = faiss.read_index(str(FAISS_INDEX_PATH))
+
+    if _models["image_paths"] is None:
+        if not os.path.exists(IMAGE_PATHS_FILE):
+            print(f"WARNING: Image paths file not found at {IMAGE_PATHS_FILE}.")
+            _models["image_paths"] = []
+        else:
+            with open(str(IMAGE_PATHS_FILE), "r") as f:
+                _models["image_paths"] = [line.strip() for line in f.readlines()]
+    
+    return _models["index"], _models["image_paths"]
 
 
 # ---------------------------------------------------------------------------
@@ -59,15 +76,21 @@ def run_audit(image_path: str) -> dict:
         vector = vectorize_crop(crop)
 
         # --- Step 3: Search FAISS ---
-        distances, indices = _index.search(vector, k=1)
-        similarity = float(1 / (1 + distances[0][0]))  # distance → similarity
-        similarity_pct = round(similarity * 100, 1)
+        index, image_paths = _get_models()
+        
+        if index is not None:
+            distances, indices = index.search(vector, k=1)
+            similarity = float(1 / (1 + distances[0][0]))  # distance → similarity
+            similarity_pct = round(similarity * 100, 1)
 
-        matched_path = (
-            _image_paths[indices[0][0]]
-            if indices[0][0] < len(_image_paths)
-            else "unknown"
-        )
+            matched_path = (
+                image_paths[indices[0][0]]
+                if indices[0][0] < len(image_paths)
+                else "unknown"
+            )
+        else:
+            similarity_pct = 0.0
+            matched_path = "N/A"
 
         components.append(
             {

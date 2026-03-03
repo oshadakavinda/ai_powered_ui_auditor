@@ -14,6 +14,7 @@ WEIGHTS_DIR = SERVER_DIR / "weights"
 # Asset file paths
 FAISS_INDEX_PATH = SERVER_DIR / "expert_style_index.bin"
 IMAGE_PATHS_FILE = SERVER_DIR / "image_paths.txt"
+SMARTUI_RL_DIR = SERVER_DIR.parent / "SMARTUI_RL"
 
 
 def ensure_upload_dir() -> None:
