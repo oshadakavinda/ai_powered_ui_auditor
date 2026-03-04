@@ -25,7 +25,7 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
         const f = e.dataTransfer.files[0]
         if (f) {
             const imageUrl = f.type.startsWith('image/') ? URL.createObjectURL(f) : undefined
-            simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(0)}MB`, imageUrl)
+            simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(1)}MB`, imageUrl)
         }
     }, [])
 
@@ -33,7 +33,7 @@ export default function UploadPage({ onProcess }: UploadPageProps) {
         const f = e.target.files?.[0]
         if (f) {
             const imageUrl = f.type.startsWith('image/') ? URL.createObjectURL(f) : undefined
-            simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(0)}MB`, imageUrl)
+            simulateUpload(f.name, `${(f.size / 1024 / 1024).toFixed(1)}MB`, imageUrl)
         }
     }, [])
 

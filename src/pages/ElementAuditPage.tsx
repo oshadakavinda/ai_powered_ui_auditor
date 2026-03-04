@@ -60,24 +60,18 @@ export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAud
     }, [])
 
     const handleProcessAudit = useCallback(async (fileToAudit?: File | string) => {
-        const file = fileToAudit || selectedFile;
-        if (!file) return;
+        const source = fileToAudit || selectedFile || previewUrl;
+        if (!source) return;
 
-        if (typeof file === 'string') {
-            setPreviewUrl(file)
-        } else {
-            setPreviewUrl(URL.createObjectURL(file))
-        }
-        
         setAuditStep('processing')
         setError(null)
 
         const formData = new FormData()
         
-        if (typeof file === 'string') {
+        if (typeof source === 'string') {
             // If it's a URL (blob), we need to fetch it first to send as a file
             try {
-                const response = await fetch(file);
+                const response = await fetch(source);
                 const blob = await response.blob();
                 formData.append('file', blob, 'design.png');
             } catch (err) {
@@ -87,7 +81,7 @@ export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAud
                 return;
             }
         } else {
-            formData.append('file', file)
+            formData.append('file', source)
         }
 
         try {
@@ -110,14 +104,18 @@ export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAud
             setError('Audit failed. Please ensure the server is running on port 8000.')
             setAuditStep('uploaded')
         }
-    }, [selectedFile])
+    }, [selectedFile, previewUrl])
 
-    // Auto-trigger audit if initialImageUrl is provided
+    // Handle initialImageUrl by setting it to preview state instead of auto-processing
     useEffect(() => {
         if (initialImageUrl) {
-            handleProcessAudit(initialImageUrl);
+            setPreviewUrl(initialImageUrl);
+            setUploadedFileName('design-from-previous-step.png');
+            setUploadedFileSize('---');
+            setUploadProgress(100);
+            setAuditStep('uploaded');
         }
-    }, [initialImageUrl, handleProcessAudit]);
+    }, [initialImageUrl]);
 
     const handleFileDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
