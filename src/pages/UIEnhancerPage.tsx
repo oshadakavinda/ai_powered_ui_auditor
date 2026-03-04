@@ -25,8 +25,8 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
     };
 
     const handleGenerate = async () => {
-        if (!file || !jsonFile) {
-            setError('Please upload both an image and the corresponding audit JSON file.');
+        if (!file) {
+            setError('Please upload a UI screenshot.');
             return;
         }
 
@@ -37,7 +37,9 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
         try {
             const formData = new FormData();
             formData.append('ui_image', file);
-            formData.append('audit_json', jsonFile);
+            if (jsonFile) {
+                formData.append('audit_json', jsonFile);
+            }
 
             const response = await fetch('http://localhost:8000/feedback/generate', {
                 method: 'POST',
@@ -75,7 +77,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
                 <h1 className="page-heading" style={{ margin: 0 }}>AI UI Enhancer</h1>
             </div>
             <p className="page-subheading">
-                Upload your UI screenshot and audit JSON to get prioritized enhancements and a Midjourney/Stable Diffusion prompt.
+                Upload your UI screenshot and audit JSON (optional) to get prioritized enhancements and a Midjourney/Stable Diffusion prompt.
             </p>
 
             <div className="card shadow-sm" style={{ padding: '2rem', marginTop: '1rem' }}>
@@ -95,7 +97,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload Audit Data (JSON)</label>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload Audit Data (JSON - Optional)</label>
                                 <input
                                     type="file"
                                     accept=".json"
@@ -116,7 +118,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
                             className="btn btn-primary"
                             style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}
                             onClick={handleGenerate}
-                            disabled={isProcessing || !file || !jsonFile}
+                            disabled={isProcessing || !file}
                         >
                             {isProcessing ? 'Analyzing and Generating...' : 'Generate Improvements'}
                         </button>

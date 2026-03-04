@@ -2,6 +2,8 @@ import os
 import shutil
 import uuid
 
+from typing import Optional
+
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
 
@@ -13,10 +15,10 @@ router = APIRouter(prefix="/feedback", tags=["feedback"])
 @router.post("/generate", summary="Generate multi-phase feedback for a UI design")
 async def generate_feedback(
     ui_image: UploadFile = File(...),
-    audit_json: UploadFile = File(...)
+    audit_json: Optional[UploadFile] = File(None)
 ):
     """
-    Accepts an image and a JSON audit file, runs the multi-phase Gemini/YOLO pipeline,
+    Accepts an image and an optional JSON audit file, runs the multi-phase Gemini/YOLO pipeline,
     and returns annotated image urls plus a text-to-image prompt.
     """
     try:
@@ -28,10 +30,12 @@ async def generate_feedback(
         with open(img_path, "wb") as f:
             shutil.copyfileobj(ui_image.file, f)
             
-        # Save uploaded JSON
-        json_path = os.path.join(UPLOAD_DIR, f"{img_id}_audit.json")
-        with open(json_path, "wb") as f:
-            shutil.copyfileobj(audit_json.file, f)
+        json_path = ""
+        # Save uploaded JSON if provided
+        if audit_json:
+            json_path = os.path.join(UPLOAD_DIR, f"{img_id}_audit.json")
+            with open(json_path, "wb") as f:
+                shutil.copyfileobj(audit_json.file, f)
 
         # Execute pipeline
         # (Assuming you put best3.pt in server/weights/best3.pt, else default to yolov8n.pt)
