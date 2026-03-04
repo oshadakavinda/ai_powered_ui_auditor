@@ -802,26 +802,55 @@ body {
   color: var(--text-secondary);
 }
 
-/* --- Privacy Notice --- */
-.privacy-notice {
+.permission-card--granted {
+  border-color: var(--green-accent);
+  background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+  box-shadow: 0 0 0 1px var(--green-accent);
+}
+
+.permission-card__check {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7CB342;
+  border: 1.5px solid #C5E1A5;
+  border-radius: 6px;
+  background: white;
+}
+
+/* --- Privacy Notice V2 --- */
+.privacy-notice-v2 {
   max-width: 600px;
-  margin: var(--space-4) auto;
+  margin: var(--space-6) auto;
   padding: var(--space-4) var(--space-6);
-  background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e988 100%);
-  border-left: 4px solid var(--green-primary);
-  border-radius: var(--radius-md);
+  background: #f1f8e9;
+  border: 1.5px solid var(--green-accent);
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
 }
 
-.privacy-notice__title {
-  font-size: var(--font-sm);
+.privacy-notice-v2__icon {
+  color: var(--green-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.privacy-notice-v2__title {
+  font-size: var(--font-base);
   font-weight: 700;
-  color: var(--green-primary);
+  color: var(--green-text);
+  margin-bottom: 2px;
 }
 
-.privacy-notice__text {
+.privacy-notice-v2__text {
   font-size: var(--font-sm);
-  color: var(--green-primary);
-  opacity: 0.8;
+  color: var(--green-text);
+  line-height: 1.4;
+  opacity: 0.9;
 }
 
 /* --- Annotation Badge --- */
@@ -1563,3 +1592,229 @@ body {
   text-overflow: ellipsis;
 }
 
+
+/* --- Design Preview Section --- */
+.preview-container {
+  animation: fadeIn var(--transition-slow);
+}
+
+.section-label {
+  font-size: var(--font-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.design-preview-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.design-preview-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.design-preview-img {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
+  display: block;
+}
+
+.figma-preview-placeholder {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  width: 100%;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+.figma-icon-wrapper {
+  background: white;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.figma-preview-text h4 {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: var(--space-1);
+}
+
+.figma-preview-text p {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.figma-status-badge {
+  margin-left: auto;
+  background: #0acf8320;
+  color: #0acf83;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  border: 1px solid #0acf8340;
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(124, 179, 66, 0.4);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 10px rgba(124, 179, 66, 0.4); }
+  50% { box-shadow: 0 0 25px rgba(124, 179, 66, 0.6); }
+  100% { box-shadow: 0 0 10px rgba(124, 179, 66, 0.4); }
+}
+
+/* --- User Testing Recording Session --- */
+.recording-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-4);
+  background: #000;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  min-height: 500px;
+}
+
+.recording-timer {
+  position: absolute;
+  top: var(--space-6);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.recording-timer__label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #aaa;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.recording-timer__value {
+  font-size: var(--font-xl);
+  font-weight: 800;
+  color: white;
+  font-family: monospace;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--red-high);
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.recording-preview.real-media {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #111;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen-video-feed {
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.webcam-pip.real-webcam {
+  position: absolute;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  width: 200px;
+  height: 150px;
+  background: #222;
+  border-radius: var(--radius-lg);
+  border: 2px solid white;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.recording-stop {
+  position: absolute;
+  bottom: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.recording-stop:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+
+.recording-stop__btn {
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.recording-stop__btn::after {
+  content: '';
+  width: 24px;
+  height: 24px;
+  background: var(--red-high);
+  border-radius: 4px;
+}
+
+.recording-stop__label {
+  color: white;
+  font-weight: 700;
+  font-size: var(--font-sm);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}

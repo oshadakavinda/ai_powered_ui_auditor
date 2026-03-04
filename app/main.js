@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, session } = require('electron');
 const path = require('path');
 
 let win = null;
@@ -25,6 +25,30 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Explicitly allow permissions for media and display record
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const allowed = ['media', 'display-capture', 'geolocation', 'notifications'];
+    if (allowed.includes(permission)) {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
+
+  // Handle getDisplayMedia requests from the renderer
+  session.defaultSession.setDisplayMediaRequestHandler((request, callback) => {
+    desktopCapturer.getSources({ types: ['screen', 'window'] }).then((sources) => {
+      // For simplicity in this specialized auditor app, we'll pick the first screen (usually full screen)
+      // In a more complex app, we could send an IPC to the renderer to show a custom picker
+      const screenSource = sources.find(s => s.id.startsWith('screen'));
+      if (screenSource) {
+        callback({ video: screenSource });
+      } else {
+        callback({ video: sources[0] });
+      }
+    });
+  });
+
   ipcMain.handle('get-sources', async () => {
     const sources = await desktopCapturer.getSources({ types: ['screen', 'window'] });
     return sources.map(s => ({ id: s.id, name: s.name, thumbnail: s.thumbnail.toDataURL() }));

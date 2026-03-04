@@ -2,7 +2,7 @@ import os
 import uuid
 import shutil
 
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 
 from server.config import UPLOAD_DIR

@@ -17,3 +17,5 @@ pandas
 openpyxl
 ctransformers
 gitpython
+deepface
+joblib

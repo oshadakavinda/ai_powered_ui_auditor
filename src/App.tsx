@@ -148,16 +148,31 @@ export default function App() {
 
             {/* Main Content */}
             <div className="main-content">
-                <div className="page-enter" key={step}>
+                <div className="page-enter" key={
+                    ['permissions', 'recording', 'user-analysis', 'user-results'].includes(step) 
+                    ? 'user-testing' 
+                    : step
+                }>
 
                     {/* Page 0: Home */}
                     {step === 'home' && (
-                        <HomePage onNavigate={(target) => setStep(target as AppStep)} />
+                        <HomePage 
+                            onNavigate={(target) => {
+                                // Clear uploaded image when navigating from home to ensure fresh start
+                                if (target === 'element-audit') {
+                                    setUploadedImageUrl(null);
+                                }
+                                setStep(target as AppStep);
+                            }} 
+                        />
                     )}
 
                     {/* UI Element Auditor */}
                     {step === 'element-audit' && (
-                        <ElementAuditPage onBack={() => setStep('home')} />
+                        <ElementAuditPage 
+                            onBack={() => setStep('home')} 
+                            initialImageUrl={uploadedImageUrl}
+                        />
                     )}
 
                     {/* UI Enhancer Page */}
@@ -174,7 +189,8 @@ export default function App() {
                                 setFigmaUrl(data.figmaUrl || '')
                                 setGitRepoUrl(data.gitRepoUrl || '')
                                 setCategory(data.category || 'universal')
-                                setStep('analysis-selection')
+                                // Directly trigger the rules processing
+                                handleProcess('rules')
                             }}
                         />
                     )}
@@ -202,7 +218,7 @@ export default function App() {
                             fileName={uploadedFile}
                             auditResult={auditResult}
                             onDone={() => setStep('violet-accuracy')}
-                            onNext={goToUserTesting}
+                            onNext={() => setStep('element-audit')}
                         />
                     )}
 
@@ -248,11 +264,12 @@ export default function App() {
                                 step={step}
                                 onStartRecording={() => setStep('recording')}
                                 onStopRecording={() => {
-                                    setStep('user-analysis')
-                                    setTimeout(() => setStep('user-results'), 3000)
+                                    setStep('user-results')
                                 }}
+                                onAnalyse={() => setStep('user-analysis')}
+                                onBackToReview={() => setStep('recording')}
                                 onExport={() => alert('Report exported!')}
-                                onDiscard={() => setStep('upload')}
+                                onDiscard={() => setStep('permissions')}
                             />
                         )}
                 </div>

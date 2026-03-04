@@ -1,42 +1,50 @@
-# --- Frontend / Node ---
+# --- Frontend / React ---
 node_modules/
 dist/
 .DS_Store
+*.local
+.env
 
 # --- Python / Backend ---
-# Cache
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-server/uienv
-# Environments
-.venv/
-venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
 env/
+venv/
+.venv/
+ven/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.map
+*.log
 
-# Large AI Models (Weights)
-# DO NOT commit these as they are >50MB and >600MB
+# --- Large AI Models & Weights ---
+# (Prevent committing massive binary files)
 SMARTUI_RL/ui_model.pt
 SMARTUI_RL/tinyllama-*.gguf
 server/expert_style_index.bin
+server/weights/*.pt
+server/weights/*.bin
 
-# Temporary / Generated Data
+# --- Uploaded & Generated Data ---
+server/uploads/
+server/static/uploads/
 SMARTUI_RL/audit_result.json
 SMARTUI_RL/rl_memory.json
-SMARTUI_RL/__pycache__/
-server/static/uploads/
-*.log
+Interactive\ video\ analyzer/__pycache__/
 
-# Debug Scripts
-yolo_debug.py
-
-# Temporary / Generated Data
-SMARTUI_RL/audit_result.json
-SMARTUI_RL/rl_memory.json
-SMARTUI_RL/__pycache__/
-server/static/uploads/
-*.log
-
-# Debug Scripts
-yolo_debug.py
+# --- OS / IDE ---
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

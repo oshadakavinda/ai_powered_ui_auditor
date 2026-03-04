@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 interface AuditComponent {
     class: string
@@ -21,20 +21,21 @@ interface AuditResult {
 type AuditStep = 'upload' | 'uploaded' | 'processing' | 'results'
 
 interface ElementAuditPageProps {
-    onBack: () => void
+    onBack: () => void;
+    initialImageUrl?: string | null;
 }
 
-export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
+export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAuditPageProps) {
     const [category, setCategory] = useState('universal')
     const [auditStep, setAuditStep] = useState<AuditStep>('upload')
     const [result, setResult] = useState<AuditResult | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [dragOver, setDragOver] = useState(false)
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [uploadProgress, setUploadProgress] = useState(0)
     const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
     const [uploadedFileSize, setUploadedFileSize] = useState<string | null>(null)
+    const [previewUrl, setPreviewUrl] = useState<string | null>(initialImageUrl || null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const simulateUpload = useCallback((file: File) => {
@@ -58,13 +59,36 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
         }, 300)
     }, [])
 
-    const handleProcessAudit = useCallback(async () => {
-        if (!selectedFile) return
+    const handleProcessAudit = useCallback(async (fileToAudit?: File | string) => {
+        const file = fileToAudit || selectedFile;
+        if (!file) return;
+
+        if (typeof file === 'string') {
+            setPreviewUrl(file)
+        } else {
+            setPreviewUrl(URL.createObjectURL(file))
+        }
+        
         setAuditStep('processing')
         setError(null)
 
         const formData = new FormData()
-        formData.append('file', selectedFile)
+        
+        if (typeof file === 'string') {
+            // If it's a URL (blob), we need to fetch it first to send as a file
+            try {
+                const response = await fetch(file);
+                const blob = await response.blob();
+                formData.append('file', blob, 'design.png');
+            } catch (err) {
+                console.error('Failed to fetch initial image:', err);
+                setError('Failed to load initial image.');
+                setAuditStep('upload');
+                return;
+            }
+        } else {
+            formData.append('file', file)
+        }
 
         try {
             const response = await fetch('http://localhost:8000/audit', {
@@ -87,6 +111,13 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
             setAuditStep('uploaded')
         }
     }, [selectedFile])
+
+    // Auto-trigger audit if initialImageUrl is provided
+    useEffect(() => {
+        if (initialImageUrl) {
+            handleProcessAudit(initialImageUrl);
+        }
+    }, [initialImageUrl, handleProcessAudit]);
 
     const handleFileDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
@@ -289,7 +320,7 @@ export default function ElementAuditPage({ onBack }: ElementAuditPageProps) {
                 <div className="footer-actions">
                     <button
                         className="btn btn-primary btn-primary-lg"
-                        onClick={handleProcessAudit}
+                        onClick={() => handleProcessAudit()}
                         style={{ opacity: isUploadComplete ? 1 : 0.5, width: '100%', maxWidth: 400 }}
                         disabled={!isUploadComplete}
                     >
