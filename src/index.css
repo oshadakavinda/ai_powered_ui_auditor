@@ -1251,7 +1251,7 @@ body {
 /* --- Navigation Menu --- */
 .title-bar__menu-container {
   position: absolute;
-  left: 60px;
+  left: 12px;
   display: flex;
   align-items: center;
   -webkit-app-region: no-drag;

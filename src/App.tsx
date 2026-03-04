@@ -104,11 +104,7 @@ export default function App() {
         <div className="app-container">
             {/* Title Bar */}
             <div className="title-bar">
-                <div className="title-bar__controls">
-                    <div className="title-bar__dot title-bar__dot--close" />
-                    <div className="title-bar__dot title-bar__dot--minimize" />
-                    <div className="title-bar__dot title-bar__dot--maximize" />
-                </div>
+
 
                 <div className="title-bar__menu-container">
                     <button
