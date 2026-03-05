@@ -45,6 +45,7 @@ export default function App() {
     const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
     const [category, setCategory] = useState<string>('universal')
     const [auditResult, setAuditResult] = useState<any>(null)
+    const [elementAuditResult, setElementAuditResult] = useState<any>(null)
 
     const handleProcess = async (option: 'rules' | 'elements' | 'all') => {
         switch (option) {
@@ -171,13 +172,23 @@ export default function App() {
                     {step === 'element-audit' && (
                         <ElementAuditPage
                             onBack={() => setStep('home')}
+                            onNext={(result, imageUrl) => {
+                                setElementAuditResult(result)
+                                if (imageUrl) setUploadedImageUrl(imageUrl)
+                                setStep('ui-enhancer')
+                            }}
                             initialImageUrl={uploadedImageUrl}
                         />
                     )}
 
                     {/* UI Enhancer Page */}
                     {step === 'ui-enhancer' && (
-                        <UIEnhancerPage onBack={() => setStep('home')} />
+                        <UIEnhancerPage
+                            onBack={() => setStep('home')}
+                            initialImageUrl={uploadedImageUrl}
+                            comp1AuditResult={auditResult}
+                            comp2AuditResult={elementAuditResult}
+                        />
                     )}
 
                     {/* Page 1: Upload */}

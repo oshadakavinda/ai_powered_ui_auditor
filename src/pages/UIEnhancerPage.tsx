@@ -2,15 +2,29 @@ import React, { useState } from 'react';
 
 interface UIEnhancerPageProps {
     onBack: () => void;
+    initialImageUrl?: string | null;
+    comp1AuditResult?: any;
+    comp2AuditResult?: any;
 }
 
-const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
+const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl, comp1AuditResult, comp2AuditResult }) => {
     const [file, setFile] = useState<File | null>(null);
     const [jsonFile, setJsonFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [results, setResults] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [autoFilled, setAutoFilled] = useState(false);
+
+    // Auto-fill from previous audit flow
+    React.useEffect(() => {
+        if (initialImageUrl) {
+            setPreviewUrl(initialImageUrl);
+            if (comp1AuditResult || comp2AuditResult) {
+                setAutoFilled(true);
+            }
+        }
+    }, [initialImageUrl, comp1AuditResult, comp2AuditResult]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'json') => {
         if (e.target.files && e.target.files.length > 0) {
@@ -25,7 +39,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
     };
 
     const handleGenerate = async () => {
-        if (!file) {
+        if (!file && !autoFilled) {
             setError('Please upload a UI screenshot.');
             return;
         }
@@ -36,9 +50,43 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
 
         try {
             const formData = new FormData();
-            formData.append('ui_image', file);
-            if (jsonFile) {
-                formData.append('audit_json', jsonFile);
+
+            if (autoFilled && initialImageUrl) {
+                // Auto-filled from comp 1→2 flow: fetch the image blob
+                try {
+                    const imgResponse = await fetch(initialImageUrl);
+                    const imgBlob = await imgResponse.blob();
+                    formData.append('ui_image', imgBlob, 'design.png');
+                } catch (err) {
+                    setError('Failed to load the uploaded image.');
+                    setIsProcessing(false);
+                    return;
+                }
+
+                // Combine comp 1 and comp 2 audit results into a single JSON
+                const combinedAudit = {
+                    elements: [
+                        ...(comp1AuditResult?.violations || []).map((v: any) => ({
+                            ...v,
+                            source: 'comp1_ai_audit',
+                            status: v.violated ? 'FAIL' : 'PASS'
+                        })),
+                        ...(comp2AuditResult?.components || []).map((c: any) => ({
+                            ...c,
+                            source: 'comp2_element_audit',
+                            status: c.similarity_score < 50 ? 'FAIL' : 'PASS',
+                            issues: c.similarity_score < 50 ? [{ desc: `Low similarity: ${c.similarity_score}% for ${c.class}` }] : []
+                        }))
+                    ]
+                };
+                const jsonBlob = new Blob([JSON.stringify(combinedAudit)], { type: 'application/json' });
+                formData.append('audit_json', jsonBlob, 'audit_data.json');
+            } else {
+                // Manual upload flow
+                formData.append('ui_image', file!);
+                if (jsonFile) {
+                    formData.append('audit_json', jsonFile);
+                }
             }
 
             const response = await fetch('http://localhost:8000/feedback/generate', {
@@ -85,29 +133,60 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
                     <div className="upload-section">
                         {error && <div className="error-message" style={{ color: '#ef4444', marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fef2f2', border: '1px solid #f87171', borderRadius: '4px' }}>{error}</div>}
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+                        {autoFilled && previewUrl ? (
+                            /* Auto-filled from audit flow */
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload UI Screenshot (JPG/PNG)</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => handleFileChange(e, 'image')}
-                                    style={{ display: 'block', width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-                                />
-                            </div>
+                                <div style={{ padding: '0.75rem 1rem', background: 'rgba(124, 77, 255, 0.1)', border: '1px solid rgba(124, 77, 255, 0.3)', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontSize: '1.2rem' }}>✅</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                                        Image & audit data loaded from previous analysis
+                                    </span>
+                                </div>
 
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload Audit Data (JSON - Optional)</label>
-                                <input
-                                    type="file"
-                                    accept=".json"
-                                    onChange={(e) => handleFileChange(e, 'json')}
-                                    style={{ display: 'block', width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-                                />
-                            </div>
-                        </div>
+                                <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                                    <p style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Image Preview</p>
+                                    <img src={previewUrl} alt="UI Preview" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
+                                </div>
 
-                        {previewUrl && (
+                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                                    {comp1AuditResult && (
+                                        <span style={{ padding: '0.35rem 0.75rem', background: 'rgba(76, 175, 80, 0.1)', border: '1px solid rgba(76, 175, 80, 0.3)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                            🎨 AI Audit Data
+                                        </span>
+                                    )}
+                                    {comp2AuditResult && (
+                                        <span style={{ padding: '0.35rem 0.75rem', background: 'rgba(33, 150, 243, 0.1)', border: '1px solid rgba(33, 150, 243, 0.3)', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>
+                                            🔍 Element Audit Data ({comp2AuditResult.total_components} components)
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            /* Manual upload */
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload UI Screenshot (JPG/PNG)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => handleFileChange(e, 'image')}
+                                        style={{ display: 'block', width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload Audit Data (JSON - Optional)</label>
+                                    <input
+                                        type="file"
+                                        accept=".json"
+                                        onChange={(e) => handleFileChange(e, 'json')}
+                                        style={{ display: 'block', width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {!autoFilled && previewUrl && (
                             <div className="preview-container" style={{ marginBottom: '2rem', textAlign: 'center' }}>
                                 <p style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Image Preview</p>
                                 <img src={previewUrl} alt="UI Preview" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
@@ -118,7 +197,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack }) => {
                             className="btn btn-primary"
                             style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}
                             onClick={handleGenerate}
-                            disabled={isProcessing || !file}
+                            disabled={isProcessing || (!file && !autoFilled)}
                         >
                             {isProcessing ? 'Analyzing and Generating...' : 'Generate Improvements'}
                         </button>
