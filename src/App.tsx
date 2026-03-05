@@ -149,28 +149,28 @@ export default function App() {
             {/* Main Content */}
             <div className="main-content">
                 <div className="page-enter" key={
-                    ['permissions', 'recording', 'user-analysis', 'user-results'].includes(step) 
-                    ? 'user-testing' 
-                    : step
+                    ['permissions', 'recording', 'user-analysis', 'user-results'].includes(step)
+                        ? 'user-testing'
+                        : step
                 }>
 
                     {/* Page 0: Home */}
                     {step === 'home' && (
-                        <HomePage 
+                        <HomePage
                             onNavigate={(target) => {
                                 // Clear uploaded image when navigating from home to ensure fresh start
                                 if (target === 'element-audit') {
                                     setUploadedImageUrl(null);
                                 }
                                 setStep(target as AppStep);
-                            }} 
+                            }}
                         />
                     )}
 
                     {/* UI Element Auditor */}
                     {step === 'element-audit' && (
-                        <ElementAuditPage 
-                            onBack={() => setStep('home')} 
+                        <ElementAuditPage
+                            onBack={() => setStep('home')}
                             initialImageUrl={uploadedImageUrl}
                         />
                     )}
@@ -183,6 +183,7 @@ export default function App() {
                     {/* Page 1: Upload */}
                     {step === 'upload' && (
                         <UploadPage
+                            onBack={() => setStep('home')}
                             onProcess={(data) => {
                                 setUploadedFile(data.fileName)
                                 setUploadedImageUrl(data.imageUrl || null)
@@ -262,6 +263,7 @@ export default function App() {
                         step === 'user-analysis' || step === 'user-results') && (
                             <UserTesting
                                 step={step}
+                                onBack={() => setStep('home')}
                                 onStartRecording={() => setStep('recording')}
                                 onStopRecording={() => {
                                     setStep('user-results')
