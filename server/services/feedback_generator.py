@@ -36,7 +36,7 @@ def ask_gemini(prompt, img_path):
         time.sleep(4) 
         img = PIL.Image.open(img_path)
         response = client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             contents=[prompt, img]
         )
         return response.text.strip().replace('"', '').replace("'", "")[:30]
@@ -49,7 +49,7 @@ def get_full_response(prompt, img_path):
         time.sleep(2)
         img = PIL.Image.open(img_path)
         response = client.models.generate_content(
-            model="gemini-2.0-flash-exp",
+            model="gemini-2.5-flash",
             contents=[prompt, img]
         )
         return response.text.strip()
