@@ -3,24 +3,7 @@ from typing import Dict, List, Any
 from SMARTUI_RL.auditor_service import run_smart_audit
 from server.config import SMARTUI_RL_DIR, UPLOAD_DIR
 
-def run_url_audit(figma_url: str, git_repo_url: str, profile: str = "universal") -> Dict[str, Any]:
-    """
-    Orchestrates the UI audit for Figma and Git URLs.
-    """
-    # --- STEP 1: RESOLVE FIGMA URL ---
-    image_path = str(SMARTUI_RL_DIR / "test1.png")
-    if not os.path.exists(image_path):
-        image_path = str(SMARTUI_RL_DIR / "test1.jpg")
 
-    # --- STEP 2: RUN AI AUDIT ---
-    print(f"🤖 Calling SMARTUI_RL Model Pipeline...")
-    raw_result = run_smart_audit(image_path, profile)
-
-    if "error" in raw_result:
-        print(f"❌ AI Model Error: {raw_result['error']}")
-        return raw_result
-
-    return _transform_audit_result(raw_result, profile, figma_url, git_repo_url)
 
 def run_smart_image_audit(image_path: str, profile: str = "universal") -> Dict[str, Any]:
     """
@@ -35,7 +18,7 @@ def run_smart_image_audit(image_path: str, profile: str = "universal") -> Dict[s
 
     return _transform_audit_result(raw_result, profile)
 
-def _transform_audit_result(raw_result: Dict[str, Any], profile: str, figma_url: str = None, git_repo_url: str = None) -> Dict[str, Any]:
+def _transform_audit_result(raw_result: Dict[str, Any], profile: str) -> Dict[str, Any]:
     """Common logic to transform raw AI model output for the frontend."""
     transformed_violations = []
     
@@ -69,9 +52,7 @@ def _transform_audit_result(raw_result: Dict[str, Any], profile: str, figma_url:
     final_response = {
         "meta": {
             **raw_result.get("meta", {}),
-            "profile": profile,
-            "figma_url": figma_url,
-            "git_repo_url": git_repo_url
+            "profile": profile
         },
         "summary": raw_result.get("summary", {}),
         "violations": transformed_violations,

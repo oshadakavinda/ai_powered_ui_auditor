@@ -13,9 +13,9 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="feature-grid">
                 <div className="feature-card" onClick={() => onNavigate('upload')}>
                     <div className="feature-card__icon">🎨</div>
-                    <h3 className="feature-card__title">AI Audit</h3>
+                    <h3 className="feature-card__title">Rule Base Analyser</h3>
                     <p className="feature-card__desc">
-                        Upload Figma URLs and Screenshots to analyze UI consistency and violations.
+                        Upload Screenshots to analyze UI consistency and violations.
                     </p>
                     <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Audit</button>
                 </div>
