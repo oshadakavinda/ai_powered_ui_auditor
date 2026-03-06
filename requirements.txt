@@ -19,3 +19,5 @@ ctransformers
 gitpython
 deepface
 joblib
+tensorflow
+tf-keras
