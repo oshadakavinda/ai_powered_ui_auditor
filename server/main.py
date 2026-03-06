@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.config import ensure_upload_dir
-from server.routers import audit, health, url_audit, feedback, export, feedback_generator, video_analysis
+from server.routers import audit, health, feedback, export, feedback_generator, video_analysis
 
 # ---------------------------------------------------------------------------
 # App factory
@@ -39,7 +39,6 @@ app.add_middleware(
 # Register routers
 app.include_router(audit.router)
 app.include_router(health.router)
-app.include_router(url_audit.router)
 app.include_router(feedback.router)
 app.include_router(export.router)
 app.include_router(feedback_generator.router)

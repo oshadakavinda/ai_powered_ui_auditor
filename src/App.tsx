@@ -38,9 +38,6 @@ export default function App() {
     const [uploadedFile, setUploadedFile] = useState<string | null>(null)
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null)
 
-    // New states for AI Audit
-    const [figmaUrl, setFigmaUrl] = useState<string>('')
-    const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
     const [category, setCategory] = useState<string>('universal')
     const [auditResult, setAuditResult] = useState<any>(null)
     const [elementAuditResult, setElementAuditResult] = useState<any>(null)
@@ -71,32 +68,18 @@ export default function App() {
             case 'rules':
                 setStep('processing')
                 try {
-                    let response;
-                    const isFigmaDefault = figmaUrl === 'https://www.figma.com/design/...' || !figmaUrl;
+                    if (!uploadedImageUrl) throw new Error("No image uploaded for processing");
 
-                    if (uploadedImageUrl && (isFigmaDefault || uploadedImageUrl.startsWith('blob:'))) {
-                        // 🖼️ Image Upload Flow (Actual file uploaded or placeholder used with image)
-                        const blob = await fetch(uploadedImageUrl).then(r => r.blob());
-                        const formData = new FormData();
-                        formData.append('file', blob, uploadedFile || 'design.png');
-                        formData.append('profile', category || 'universal');
+                    // 🖼️ Image Upload Flow
+                    const blob = await fetch(uploadedImageUrl).then(r => r.blob());
+                    const formData = new FormData();
+                    formData.append('file', blob, uploadedFile || 'design.png');
+                    formData.append('profile', category || 'universal');
 
-                        response = await fetch('http://localhost:8000/audit/smart', {
-                            method: 'POST',
-                            body: formData
-                        });
-                    } else {
-                        // 🔗 URL Audit Flow
-                        response = await fetch('http://localhost:8000/audit/url', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                figma_url: figmaUrl,
-                                git_repo_url: gitRepoUrl,
-                                profile: category || 'universal'
-                            })
-                        });
-                    }
+                    const response = await fetch('http://localhost:8000/audit/smart', {
+                        method: 'POST',
+                        body: formData
+                    });
 
                     const data = await response.json()
                     setAuditResult(data)
@@ -215,8 +198,6 @@ export default function App() {
                             onProcess={(data) => {
                                 setUploadedFile(data.fileName)
                                 setUploadedImageUrl(data.imageUrl || null)
-                                setFigmaUrl(data.figmaUrl || '')
-                                setGitRepoUrl(data.gitRepoUrl || '')
                                 setCategory(data.category || 'universal')
                                 // Directly trigger the rules processing
                                 handleProcess('rules')
