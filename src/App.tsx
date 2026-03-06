@@ -45,6 +45,7 @@ export default function App() {
     const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
     const [category, setCategory] = useState<string>('universal')
     const [auditResult, setAuditResult] = useState<any>(null)
+    const [elementAuditResult, setElementAuditResult] = useState<any>(null)
 
     // Handle outside clicks to close the menu
     const menuRef = useRef<HTMLDivElement>(null)
@@ -169,40 +170,51 @@ export default function App() {
             {/* Main Content */}
             <div className="main-content">
                 <div className="page-enter" key={
-                    ['permissions', 'recording', 'user-analysis', 'user-results'].includes(step) 
-                    ? 'user-testing' 
-                    : step
+                    ['permissions', 'recording', 'user-analysis', 'user-results'].includes(step)
+                        ? 'user-testing'
+                        : step
                 }>
 
                     {/* Page 0: Home */}
                     {step === 'home' && (
-                        <HomePage 
+                        <HomePage
                             onNavigate={(target) => {
                                 // Clear uploaded image when navigating from home to ensure fresh start
                                 if (target === 'element-audit') {
                                     setUploadedImageUrl(null);
                                 }
                                 setStep(target as AppStep);
-                            }} 
+                            }}
                         />
                     )}
 
                     {/* UI Element Auditor */}
                     {step === 'element-audit' && (
-                        <ElementAuditPage 
-                            onBack={() => setStep('home')} 
+                        <ElementAuditPage
+                            onBack={() => setStep('home')}
+                            onNext={(result, imageUrl) => {
+                                setElementAuditResult(result)
+                                if (imageUrl) setUploadedImageUrl(imageUrl)
+                                setStep('ui-enhancer')
+                            }}
                             initialImageUrl={uploadedImageUrl}
                         />
                     )}
 
                     {/* UI Enhancer Page */}
                     {step === 'ui-enhancer' && (
-                        <UIEnhancerPage onBack={() => setStep('home')} />
+                        <UIEnhancerPage
+                            onBack={() => setStep('home')}
+                            initialImageUrl={uploadedImageUrl}
+                            comp1AuditResult={auditResult}
+                            comp2AuditResult={elementAuditResult}
+                        />
                     )}
 
                     {/* Page 1: Upload */}
                     {step === 'upload' && (
                         <UploadPage
+                            onBack={() => setStep('home')}
                             onProcess={(data) => {
                                 setUploadedFile(data.fileName)
                                 setUploadedImageUrl(data.imageUrl || null)
@@ -282,6 +294,7 @@ export default function App() {
                         step === 'user-analysis' || step === 'user-results') && (
                             <UserTesting
                                 step={step}
+                                onBack={() => setStep('home')}
                                 onStartRecording={() => setStep('recording')}
                                 onStopRecording={() => {
                                     setStep('user-results')

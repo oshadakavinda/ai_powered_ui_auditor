@@ -22,10 +22,11 @@ type AuditStep = 'upload' | 'uploaded' | 'processing' | 'results'
 
 interface ElementAuditPageProps {
     onBack: () => void;
+    onNext?: (result: AuditResult, imageUrl: string | null) => void;
     initialImageUrl?: string | null;
 }
 
-export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAuditPageProps) {
+export default function ElementAuditPage({ onBack, onNext, initialImageUrl }: ElementAuditPageProps) {
     const [category, setCategory] = useState('universal')
     const [auditStep, setAuditStep] = useState<AuditStep>('upload')
     const [result, setResult] = useState<AuditResult | null>(null)
@@ -67,7 +68,7 @@ export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAud
         setError(null)
 
         const formData = new FormData()
-        
+
         if (typeof source === 'string') {
             // If it's a URL (blob), we need to fetch it first to send as a file
             try {
@@ -451,7 +452,7 @@ export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAud
             </div>
 
             {/* Actions */}
-            <div className="footer-actions" style={{ marginTop: 'var(--space-8)' }}>
+            <div className="footer-actions" style={{ marginTop: 'var(--space-8)', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button
                     className="btn btn-primary"
                     onClick={() => {
@@ -466,6 +467,14 @@ export default function ElementAuditPage({ onBack, initialImageUrl }: ElementAud
                 >
                     Audit Another Screenshot
                 </button>
+                {onNext && (
+                    <button
+                        className="btn btn-primary btn-primary-lg shadow-glow"
+                        onClick={() => onNext(result, previewUrl)}
+                    >
+                        Go to UI Enhancer →
+                    </button>
+                )}
             </div>
         </div>
     )

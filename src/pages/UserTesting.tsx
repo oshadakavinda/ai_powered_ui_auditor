@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 
 interface UserTestingProps {
     step: string
+    onBack: () => void
     onStartRecording: () => void
     onStopRecording: () => void
     onAnalyse: () => void
@@ -51,7 +52,7 @@ interface AnalysisResult {
     session_id: string
 }
 
-export default function UserTesting({ step, onStartRecording, onStopRecording, onAnalyse, onBackToReview, onExport, onDiscard }: UserTestingProps) {
+export default function UserTesting({ step, onBack, onStartRecording, onStopRecording, onAnalyse, onBackToReview, onExport, onDiscard }: UserTestingProps) {
     const [permissions, setPermissions] = useState({ screen: false, webcam: false, storage: false })
     const [showTimesUpModal, setShowTimesUpModal] = useState(false)
     const [showExportModal, setShowExportModal] = useState(false)
@@ -63,7 +64,7 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
     const [analysisLoading, setAnalysisLoading] = useState(false)
     const [analysisError, setAnalysisError] = useState<string | null>(null)
-    
+
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const screenVideoRef = useRef<HTMLVideoElement>(null)
     const webcamVideoRef = useRef<HTMLVideoElement>(null)
@@ -104,12 +105,12 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
 
     const stopAllStreams = () => {
         console.log("Stopping all streams and recording...");
-        
+
         if (screenRecorderRef.current && screenRecorderRef.current.state !== 'inactive') {
-            try { screenRecorderRef.current.stop(); } catch(e) {}
+            try { screenRecorderRef.current.stop(); } catch (e) { }
         }
         if (webcamRecorderRef.current && webcamRecorderRef.current.state !== 'inactive') {
-            try { webcamRecorderRef.current.stop(); } catch(e) {}
+            try { webcamRecorderRef.current.stop(); } catch (e) { }
         }
 
         if (activeScreenStream) {
@@ -127,7 +128,7 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
     const handleDiscard = () => {
         console.log("Discarding recording and resetting state...");
         stopAllStreams();
-        
+
         // Reset all states
         setIsRecording(false);
         setIsCaptureStarted(false);
@@ -139,7 +140,7 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
         setShowTimesUpModal(false);
         setShowExportModal(false);
         setExpandedIssue(null);
-        
+
         // Navigate back to permissions
         onDiscard();
     }
@@ -147,7 +148,7 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
     const generateAuditReport = (result: AnalysisResult): string => {
         const { summary, issues, recommendations } = result;
         const dateStr = new Date().toLocaleString();
-        
+
         return `
 <!DOCTYPE html>
 <html lang="en">
@@ -409,7 +410,7 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
 
     const performStartRecording = () => {
         console.log("Initializing MediaRecorders with active streams...");
-        
+
         // Reset chunks
         screenChunksRef.current = [];
         webcamChunksRef.current = [];
@@ -530,7 +531,19 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
     if (step === 'permissions') {
         return (
             <div>
-                <h1 className="page-heading">Required Permissions</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <button
+                        onClick={onBack}
+                        className="back-button-circle"
+                        title="Back to Home"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+                    <h1 className="page-heading" style={{ margin: 0 }}>Required Permissions</h1>
+                </div>
                 <p className="page-subheading">We need your permission to record your screen and webcam to analyze UI interactions and user behavior.</p>
 
                 <div className={`permission-card ${permissions.screen ? 'permission-card--granted' : ''}`}>
@@ -743,10 +756,10 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
                 {/* Recording Preview */}
                 <div className="recording-preview real-media">
                     {/* Screen Stream */}
-                    <video 
-                        ref={screenVideoRef} 
-                        autoPlay 
-                        muted 
+                    <video
+                        ref={screenVideoRef}
+                        autoPlay
+                        muted
                         playsInline
                         className="screen-video-feed"
                         style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#000' }}
@@ -754,16 +767,16 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
 
                     {/* Webcam PiP */}
                     <div className="webcam-pip real-webcam">
-                        <video 
-                            ref={webcamVideoRef} 
-                            autoPlay 
-                            muted 
+                        <video
+                            ref={webcamVideoRef}
+                            autoPlay
+                            muted
                             playsInline
                             className="webcam-video-feed"
-                            style={{ 
-                                width: '100%', 
-                                height: '100%', 
-                                objectFit: 'cover', 
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
                                 borderRadius: 'inherit',
                                 transform: 'scaleX(-1)' // Mirror effect
                             }}
@@ -785,10 +798,10 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
                             zIndex: 100,
                             pointerEvents: 'all'
                         }}>
-                             <button 
+                            <button
                                 className="btn btn-primary btn-primary-lg shadow-glow"
-                                style={{ 
-                                    padding: '1rem 4rem', 
+                                style={{
+                                    padding: '1rem 4rem',
                                     borderRadius: 100,
                                 }}
                                 onClick={(e) => {
@@ -979,7 +992,7 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
                         <h2 className="modal__title">All Done!</h2>
                         <p className="modal__body">Export Your Final Documentation</p>
                         <div className="modal__actions">
-                            <button className="btn btn-primary btn-primary-lg" onClick={() => { 
+                            <button className="btn btn-primary btn-primary-lg" onClick={() => {
                                 // 1. Download Screen Video
                                 if (recordedBlobs.screen) {
                                     const url = URL.createObjectURL(recordedBlobs.screen);
@@ -1007,8 +1020,8 @@ export default function UserTesting({ step, onStartRecording, onStopRecording, o
                                     a.click();
                                 }
 
-                                setShowExportModal(false); 
-                                onExport(); 
+                                setShowExportModal(false);
+                                onExport();
                             }}>Export & Download</button>
                             <button className="btn btn-outline btn-primary-lg" onClick={handleDiscard}>Discard</button>
                         </div>
