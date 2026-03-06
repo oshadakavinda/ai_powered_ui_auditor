@@ -39,6 +39,7 @@ def _transform_audit_result(raw_result: Dict[str, Any], profile: str, figma_url:
     """Common logic to transform raw AI model output for the frontend."""
     transformed_violations = []
     
+    # Process element-level violations (math rules)
     for element in raw_result.get("elements", []):
         for issue in element.get("issues", []):
             transformed_violations.append({
@@ -53,6 +54,17 @@ def _transform_audit_result(raw_result: Dict[str, Any], profile: str, figma_url:
                     "content": element.get("content")
                 }
             })
+
+    # Process page-level text rules (violet rules)
+    for issue in raw_result.get("text_rule_violations", []):
+        transformed_violations.append({
+            "id": len(transformed_violations) + 1,
+            "rule": issue.get("rule", "Unknown"),
+            "title": issue.get("title", _map_rule_to_title(issue.get("rule"))),
+            "description": issue.get("description", ""),
+            "violated": issue.get("violated", True),
+            "element_info": None # Page level rule
+        })
 
     final_response = {
         "meta": {
@@ -76,6 +88,11 @@ def _map_rule_to_title(rule_name: str) -> str:
         "min_field_height": "Input Field Accessibility",
         "contrast_ratio": "Contrast Ratio Check",
         "max_misalignment": "Alignment Accuracy",
-        "visual_hierarchy": "Visual Hierarchy"
+        "visual_hierarchy": "Visual Hierarchy",
+        "rule_of_proximity": "Rule of Proximity",
+        "the_60-30-10_rule": "The 60-30-10 Rule",
+        "visibility_of_system_status": "Visibility of System Status",
+        "user_control_&_freedom": "User Control & Freedom",
+        "clarity_and_simplicity": "Clarity and Simplicity"
     }
     return mapping.get(rule_name, rule_name.replace("_", " ").title())
