@@ -9,7 +9,6 @@ interface UIEnhancerPageProps {
 
 const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl, comp1AuditResult, comp2AuditResult }) => {
     const [file, setFile] = useState<File | null>(null);
-    const [jsonFile, setJsonFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [results, setResults] = useState<any>(null);
@@ -26,15 +25,11 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl
         }
     }, [initialImageUrl, comp1AuditResult, comp2AuditResult]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'json') => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const selectedFile = e.target.files[0];
-            if (type === 'image') {
-                setFile(selectedFile);
-                setPreviewUrl(URL.createObjectURL(selectedFile));
-            } else {
-                setJsonFile(selectedFile);
-            }
+            setFile(selectedFile);
+            setPreviewUrl(URL.createObjectURL(selectedFile));
         }
     };
 
@@ -84,9 +79,6 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl
             } else {
                 // Manual upload flow
                 formData.append('ui_image', file!);
-                if (jsonFile) {
-                    formData.append('audit_json', jsonFile);
-                }
             }
 
             const response = await fetch('http://localhost:8000/feedback/generate', {
@@ -125,7 +117,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl
                 <h1 className="page-heading" style={{ margin: 0 }}>AI UI Enhancer</h1>
             </div>
             <p className="page-subheading">
-                Upload your UI screenshot and audit JSON (optional) to get prioritized enhancements and a Midjourney/Stable Diffusion prompt.
+                Upload your UI screenshot to get prioritized enhancements and a Midjourney/Stable Diffusion prompt.
             </p>
 
             <div className="card shadow-sm" style={{ padding: '2rem', marginTop: '1rem' }}>
@@ -169,17 +161,7 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl
                                     <input
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) => handleFileChange(e, 'image')}
-                                        style={{ display: 'block', width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>Upload Audit Data (JSON - Optional)</label>
-                                    <input
-                                        type="file"
-                                        accept=".json"
-                                        onChange={(e) => handleFileChange(e, 'json')}
+                                        onChange={handleFileChange}
                                         style={{ display: 'block', width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '4px' }}
                                     />
                                 </div>
@@ -253,7 +235,6 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl
                             onClick={() => {
                                 setResults(null);
                                 setFile(null);
-                                setJsonFile(null);
                                 setPreviewUrl(null);
                             }}
                         >

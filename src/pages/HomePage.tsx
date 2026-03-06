@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface HomePageProps {
-    onNavigate: (step: 'upload' | 'element-audit' | 'permissions' | 'ui-enhancer') => void;
+    onNavigate: (step: 'upload' | 'element-audit' | 'permissions' | 'ui-enhancer' | 'combined-selection') => void;
 }
 
 const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
     return (
         <div className="home-page">
             <h1 className="page-heading">Welcome to Smart UI Auditor</h1>
-          
+
 
             <div className="feature-grid">
                 <div className="feature-card" onClick={() => onNavigate('upload')}>
@@ -29,13 +29,15 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                     <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Element Audit</button>
                 </div>
 
-                <div className="feature-card" onClick={() => onNavigate('ui-enhancer')}>
-                    <div className="feature-card__icon">✨</div>
-                    <h3 className="feature-card__title">Improved UI Generator</h3>
+
+
+                <div className="feature-card" onClick={() => onNavigate('combined-selection')}>
+                    <div className="feature-card__icon">🧩</div>
+                    <h3 className="feature-card__title">Combined Analysis</h3>
                     <p className="feature-card__desc">
-                        Generate improved UI designs from screenshots based on AI feedback and design principles.
+                        Run rules audit, element scoring, or both — then generate enhanced UI in one flow.
                     </p>
-                    <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Generator</button>
+                    <button className="btn btn-primary" style={{ marginTop: 'auto' }}>Start Combined</button>
                 </div>
 
                 <div className="feature-card" onClick={() => onNavigate('permissions')}>
