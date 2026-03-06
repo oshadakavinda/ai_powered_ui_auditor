@@ -80,20 +80,25 @@ export default function VioletRulesPage({ step, fileName, auditResult, onDone, o
 
     return (
         <div>
-            <h1 className="page-heading">Violet Rules</h1>
+            <h1 className="page-heading">
+                {step === 'violet-rules' ? 'Audited Rules' : 'Violated Rules'}
+            </h1>
 
             {/* Rule Cards */}
             {displayRules.length > 0 ? (
                 displayRules.map((rule: any) => (
                     <div
                         key={rule.id}
-                        className="rule-card"
+                        className={`rule-card ${!rule.violated ? 'rule-card--passed' : ''}`}
                         onClick={() => {
                             setSelectedRule(rule)
                             setShowModal(true)
                         }}
                     >
-                        <div className="rule-card__title">{rule.title || rule.rule}</div>
+                        <div className="rule-card__title">
+                            {rule.violated ? '❌ ' : '✅ '}
+                            {rule.title || rule.rule}
+                        </div>
                         <div className="rule-card__description">{rule.description || rule.desc}</div>
                     </div>
                 ))
@@ -135,7 +140,9 @@ export default function VioletRulesPage({ step, fileName, auditResult, onDone, o
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
-                        <h2 className="modal__title">Violet Rules</h2>
+                        <h2 className="modal__title">
+                            {step === 'violet-rules' ? 'Audited Rules' : 'Violated Rules'}
+                        </h2>
                         <p className="modal__body">
                             Do you agree with this finding? Please confirm if the detected rule violation matches your experience.
                         </p>

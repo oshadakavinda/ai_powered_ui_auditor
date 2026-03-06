@@ -40,6 +40,10 @@ class RuleEngine:
             self.text_rules = []
             
             for index, row in df.iterrows():
+                # Skip the first row if it seems to be headers like "Rule ID", "Rule Name"
+                if index == 0 and str(row.values[0]).lower().strip() == "rule id":
+                    continue
+                
                 # Convert row to a single string to search for keywords easily
                 row_str = str(row.values).lower()
                 key = None
@@ -48,8 +52,12 @@ class RuleEngine:
                     # If it's not a math rule, it's likely a policy/text rule
                     # We look for rows that have a description in the 3rd column (index 2)
                     if len(row) > 2 and pd.notna(row[2]) and str(row[2]).strip():
-                        # We append a dict or string? Let's use a string for now as the notebook did
-                        self.text_rules.append(str(row[2]))
+                        # Store both Name (row[1]) and Description (row[2]) in a dictionary
+                        rule_name = str(row[1]).strip() if pd.notna(row[1]) else f"Rule_{index}"
+                        self.text_rules.append({
+                            "name": rule_name,
+                            "description": str(row[2]).strip()
+                        })
 
                 # --- B. CAPTURE MATH RULES (For the Python Judge) ---
                 key = None

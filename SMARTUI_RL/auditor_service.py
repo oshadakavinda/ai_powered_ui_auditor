@@ -161,20 +161,14 @@ def _evaluate_violet_rules(llm, engine, summary_text: str, elements_summary: str
     
     # If no excel rules, fall back to a subset of predefined ones to ensure some output
     if not excel_rules:
-        excel_rules = [r["description"] for r in VIOLET_RULES]
+        excel_rules = [{"name": r["title"], "description": r["description"]} for r in VIOLET_RULES]
 
     print(f"🟣 Evaluating {len(excel_rules)} Text Rules from Excel/Policy using LLM...")
 
-    for rule_desc in excel_rules:
-        # Try to find a matching predefined rule for better metadata
-        matched_vr = None
-        for vr in VIOLET_RULES:
-            if vr["title"].lower() in rule_desc.lower() or vr["rule"].lower() in rule_desc.lower().replace(" ", "_"):
-                matched_vr = vr
-                break
-        
-        rule_name = matched_vr["rule"] if matched_vr else rule_desc[:30].lower().replace(" ", "_")
-        rule_title = matched_vr["title"] if matched_vr else "Design Policy"
+    for rule_obj in excel_rules:
+        rule_desc = rule_obj["description"]
+        rule_name = rule_obj["name"].lower().replace(" ", "_")
+        rule_title = rule_obj["name"]
         
         # Check RL policy
         if not rl.should_flag_violation(profile, rule_name):
@@ -239,7 +233,8 @@ REASON: [Short explanation if violated, otherwise omit]
         except Exception as e:
             print(f"   ⚠️ Error evaluating rule: {e}")
 
-    print(f"🟣 Violet Rules evaluation complete: {len(text_rule_violations)} violations found")
+    actual_violations = len([v for v in text_rule_violations if v.get("violated")])
+    print(f"🟣 Violet Rules evaluation complete: {actual_violations} violations found")
     return text_rule_violations
 
 
@@ -402,7 +397,7 @@ def run_smart_audit(image_path: str, profile: str = "universal") -> dict:
     if llm:
         extra_context = ""
         if engine.text_rules:
-            short_rules = [r[:100] + "..." if len(r) > 100 else r for r in engine.text_rules[:2]]
+            short_rules = [r['description'][:100] + "..." if len(r['description']) > 100 else r['description'] for r in engine.text_rules[:2]]
             extra_context = "\nPOLICY HIGHLIGHTS:\n" + "\n".join(f"- {r}" for r in short_rules)
 
         all_violations_list = stats['violations_list'][:2]
@@ -435,6 +430,29 @@ Task: Explain why these errors matter for {profile}. Mention the Policies if rel
     print(f"Calculated Score: {score}")
     print(f"LLM Analysis Length: {len(llm_analysis)} chars")
 
+    # Prepare Unified Violations List for the Frontend
+    unified_violations = []
+    
+    # 1. Add math violations from elements (styled consistently)
+    for element in elements:
+        for issue in element.get("issues", []):
+            unified_violations.append({
+                "rule": issue.get("rule", "Math Policy"),
+                "title": issue.get("rule", "Math Policy").replace("_", " ").title(),
+                "description": issue.get("desc", "A math-based rule was violated."),
+                "violated": True,
+                "element_id": element.get("id")
+            })
+            
+    # 2. Add text rule violations
+    for v in text_rule_violations:
+        unified_violations.append({
+            "rule": v.get("rule"),
+            "title": v.get("title"),
+            "description": v.get("description"),
+            "violated": v.get("violated")
+        })
+
     report = {
         "meta": {
             "profile": profile,
@@ -444,6 +462,7 @@ Task: Explain why these errors matter for {profile}. Mention the Policies if rel
             "score": score,
             "violations": total_violations
         },
+        "violations": unified_violations,
         "elements": elements,
         "text_rule_violations": text_rule_violations,
         "llm_analysis": llm_analysis

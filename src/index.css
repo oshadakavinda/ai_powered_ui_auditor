@@ -333,6 +333,15 @@ body {
   box-shadow: var(--shadow-md);
 }
 
+.rule-card--passed {
+  background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
+  border-color: var(--border-green);
+}
+
+.rule-card--passed .rule-card__title {
+  color: var(--green-text);
+}
+
 .rule-card__title {
   font-size: var(--font-base);
   font-weight: 700;
