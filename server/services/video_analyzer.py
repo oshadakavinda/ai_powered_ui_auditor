@@ -13,7 +13,7 @@ from server.config import WEIGHTS_DIR
 
 # Lazy-loaded globals
 _yolo_model = None
-_deepface_available = False
+_deepface_available = None
 
 def _get_yolo():
     """Lazy-load the YOLO model for UI element detection."""
@@ -31,6 +31,9 @@ def _analyze_emotions(frame):
     Returns dict of emotion probabilities and dominant emotion, or None on failure.
     """
     global _deepface_available
+    if _deepface_available is False:
+        # Already determined DeepFace is not available; skip silently
+        return None
     try:
         from deepface import DeepFace
         _deepface_available = True
@@ -45,12 +48,13 @@ def _analyze_emotions(frame):
                 "probabilities": result[0].get('emotion', {}),
                 "dominant": result[0].get('dominant_emotion', 'neutral')
             }
-    except ImportError:
-        if not _deepface_available:
-            print("⚠️ deepface not installed. Using fallback emotion detection.")
-            _deepface_available = False
+    except (ImportError, ValueError) as e:
+        print(f"⚠️ DeepFace unavailable: {e}")
+        _deepface_available = False
     except Exception as e:
-        pass
+        print(f"⚠️ DeepFace analysis error: {e}")
+        import traceback
+        traceback.print_exc()
     return None
 
 
@@ -153,9 +157,22 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
     fps = cap_scr.get(cv2.CAP_PROP_FPS)
     if fps == 0:
         fps = 30
-    total_frames = int(cap_scr.get(cv2.CAP_PROP_FRAME_COUNT))
+    # .webm files often return invalid frame counts from OpenCV;
+    # we'll count frames manually and use this only for logging.
+    raw_frame_count = int(cap_scr.get(cv2.CAP_PROP_FRAME_COUNT))
+    total_frames_label = raw_frame_count if raw_frame_count > 0 else "unknown"
     width = int(cap_scr.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap_scr.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Check DeepFace availability upfront — fail fast if not available
+    try:
+        from deepface import DeepFace  # noqa: F401
+        print("✅ DeepFace is available — emotion detection enabled.")
+    except (ImportError, ValueError) as e:
+        error_msg = (f"DeepFace is not available: {e}. "
+                     f"Install with: pip install deepface tf-keras")
+        print(f"❌ {error_msg}")
+        return {"error": error_msg}
 
     # Negative emotion triggers
     triggers = ['angry', 'disgust', 'fear', 'sad']
@@ -170,7 +187,7 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
     frame_idx = 0
     unique_emotions = set()
 
-    print(f"📊 Processing {total_frames} frames (sampling every 15th frame)...")
+    print(f"📊 Processing ~{total_frames_label} frames (sampling every 15th frame)...")
 
     while True:
         ret_s, frame_scr = cap_scr.read()
@@ -179,8 +196,9 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
 
         current_time_ms = cap_scr.get(cv2.CAP_PROP_POS_MSEC)
 
-        # Sync webcam to screen timestamp
-        cap_cam.set(cv2.CAP_PROP_POS_MSEC, current_time_ms)
+        # Read webcam frame SEQUENTIALLY (not seeking).
+        # .webm files do not support random seeking with cv2.CAP_PROP_POS_MSEC,
+        # which caused ret_c to always be False.
         ret_c, frame_cam = cap_cam.read()
 
         # Process every 15th frame (~0.5 seconds at 30fps)
@@ -237,19 +255,26 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
                                 print(f"   ⚠️ [{_format_timestamp(current_time_ms)}] "
                                       f"{dominant_emotion.upper()} → {event['ui_element']}")
                                 break
+                elif frame_idx % 150 == 0:
+                    # Log periodically when emotion detection returns nothing
+                    print(f"   [Frame {frame_idx}] No emotion detected (DeepFace returned None)")
 
             except Exception as e:
                 print(f"   ⚠️ Frame {frame_idx} analysis error: {e}")
+        elif frame_idx % 15 == 0 and not ret_c and frame_idx < 30:
+            # Log webcam read failures early to help debug
+            print(f"   ⚠️ [Frame {frame_idx}] Failed to read webcam frame (ret_c=False)")
 
         frame_idx += 1
 
         if frame_idx % 100 == 0:
-            print(f"   📈 Processed {frame_idx}/{total_frames} frames...")
+            print(f"   📈 Processed {frame_idx}/{total_frames_label} frames...")
 
     cap_cam.release()
     cap_scr.release()
 
     # --- Build Summary ---
+    total_frames = frame_idx  # Use actual counted frames
     duration_seconds = (total_frames / fps) if fps > 0 else 0
     events_detected = len(timeline_data)
 
@@ -323,7 +348,7 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
         "meta": {
             "cam_video": os.path.basename(cam_path),
             "screen_video": os.path.basename(screen_path),
-            "total_frames": total_frames,
+            "total_frames": frame_idx,
             "fps": fps,
             "resolution": f"{width}x{height}"
         }

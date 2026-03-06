@@ -42,12 +42,13 @@ class RuleEngine:
             for index, row in df.iterrows():
                 # Convert row to a single string to search for keywords easily
                 row_str = str(row.values).lower()
-                
-                # --- A. CAPTURE TEXT RULES (For the AI) ---
-                # If  see "Compliance" or "Safety", save it for the LLM context
-                if "compliance" in row_str or "safety" in row_str or "hierarchy" in row_str:
-                    # Try to grab the description (usually in column 2, index 2)
-                    if len(row) > 2:
+                key = None
+                # Capture rules that aren't clearly math-based but are descriptive
+                if not key:
+                    # If it's not a math rule, it's likely a policy/text rule
+                    # We look for rows that have a description in the 3rd column (index 2)
+                    if len(row) > 2 and pd.notna(row[2]) and str(row[2]).strip():
+                        # We append a dict or string? Let's use a string for now as the notebook did
                         self.text_rules.append(str(row[2]))
 
                 # --- B. CAPTURE MATH RULES (For the Python Judge) ---

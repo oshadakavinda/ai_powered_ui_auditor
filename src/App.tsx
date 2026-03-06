@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import UploadPage from './pages/UploadPage'
 import AnalysisSelection from './pages/AnalysisSelection'
 import VioletRulesPage from './pages/VioletRulesPage'
@@ -45,6 +45,27 @@ export default function App() {
     const [gitRepoUrl, setGitRepoUrl] = useState<string>('')
     const [category, setCategory] = useState<string>('universal')
     const [auditResult, setAuditResult] = useState<any>(null)
+
+    // Handle outside clicks to close the menu
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsMenuOpen(false)
+            }
+        }
+
+        if (isMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside)
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [isMenuOpen])
 
     const handleProcess = async (option: 'rules' | 'elements' | 'all') => {
         switch (option) {
@@ -106,7 +127,7 @@ export default function App() {
             <div className="title-bar">
 
 
-                <div className="title-bar__menu-container">
+                <div className="title-bar__menu-container" ref={menuRef}>
                     <button
                         className="title-bar__menu-btn"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -143,7 +164,6 @@ export default function App() {
                     )}
                 </div>
 
-                <span className="title-bar__text">Smart UI Auditor</span>
             </div>
 
             {/* Main Content */}
