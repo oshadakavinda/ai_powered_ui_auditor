@@ -1,5 +1,9 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file if it exists
+load_dotenv()
 
 
 # Resolve the server directory (parent of this file)
@@ -11,7 +15,7 @@ UPLOAD_DIR = SERVER_DIR / "uploads"
 # Weights directory for ML model files
 WEIGHTS_DIR = SERVER_DIR / "weights"
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDm5F7atGhawjzpk_9DANLN0_bIAS98NFo")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 # Asset file paths
 FAISS_INDEX_PATH = SERVER_DIR / "expert_style_index.bin"

@@ -23,6 +23,8 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
     const [results, setResults] = useState<any>(null)
     const [error, setError] = useState<string | null>(null)
     const [processingStatus, setProcessingStatus] = useState('')
+    const [uigenResults, setUigenResults] = useState<any>(null)
+    const [uigenLoading, setUigenLoading] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -149,6 +151,50 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
         }
     }
 
+    const handleStartComparison = async () => {
+        if (!uploadedFile) return
+
+        setUigenLoading(true)
+        setUigenResults(null)
+        setPageStep('comparison')
+
+        try {
+            const formData = new FormData()
+            formData.append('ui_image', uploadedFile, uploadedFile.name)
+
+            // If we have results from comp1/comp2, pass as audit JSON
+            if (results) {
+                const combinedAudit: any = { elements: [], summary: { score: 'N/A', violations: 0 } }
+
+                if (results.synthesis_message) {
+                    // Reuse any audit data we built earlier
+                }
+
+                const jsonBlob = new Blob([JSON.stringify(combinedAudit)], { type: 'application/json' })
+                formData.append('audit_json', jsonBlob, 'audit_data.json')
+            }
+
+            const res = await fetch('http://localhost:8000/uigen/generate', {
+                method: 'POST',
+                body: formData,
+            })
+
+            if (!res.ok) {
+                const errData = await res.json()
+                throw new Error(errData.detail || errData.error || 'UIGen pipeline failed.')
+            }
+
+            const data = await res.json()
+            setUigenResults(data)
+        } catch (err: any) {
+            console.error('UIGen pipeline error:', err)
+            setError(err.message || 'UIGen pipeline failed.')
+            setPageStep('results')
+        } finally {
+            setUigenLoading(false)
+        }
+    }
+
     // ─── PROCESSING STEP ───
     if (pageStep === 'processing') {
         return (
@@ -177,7 +223,7 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                             <polyline points="12 19 5 12 12 5"></polyline>
                         </svg>
                     </button>
-                    <h1 className="page-heading" style={{ margin: 0 }}>Enhanced Output</h1>
+                    <h1 className="page-heading" style={{ margin: 0 }}>Analytic Output</h1>
                 </div>
 
                 {/* Enhanced Output Only */}
@@ -198,7 +244,7 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                     <button
                         className="btn btn-primary btn-primary-lg shadow-glow"
                         style={{ width: '100%', maxWidth: 400 }}
-                        onClick={() => setPageStep('comparison')}
+                        onClick={handleStartComparison}
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}>
                             <rect x="3" y="3" width="7" height="7" />
@@ -206,7 +252,7 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                             <rect x="3" y="14" width="7" height="7" />
                             <rect x="14" y="14" width="7" height="7" />
                         </svg>
-                        Preview Comparison
+                        Preview Enchanced Comparison
                     </button>
                     <button
                         className="btn btn-outline"
@@ -226,9 +272,14 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
         )
     }
 
-    // ─── COMPARISON STEP (Input vs Enhanced side-by-side) ───
-    if (pageStep === 'comparison' && results) {
-        const enhancedImageUrl = `http://localhost:8000${selected === 'rules' ? results.images.phase1_technical : selected === 'elements' ? results.images.phase2_aesthetic : results.images.phase3_synthesis}`
+    // ─── COMPARISON STEP (UIGen pipeline output) ───
+    if (pageStep === 'comparison') {
+        // Determine the UIGen enhanced image URL
+        const uigenImageUrl = uigenResults?.images?.phase6_improved
+            ? `http://localhost:8000${uigenResults.images.phase6_improved}`
+            : uigenResults?.images?.phase3
+                ? `http://localhost:8000${uigenResults.images.phase3}`
+                : null
 
         return (
             <div className="page-container page-enter">
@@ -242,33 +293,66 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                     <h1 className="page-heading" style={{ margin: 0 }}>Input vs Enhanced</h1>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                    {/* Input Image */}
-                    <div>
-                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Input Interface</h3>
-                        <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--border-light)', background: '#f9f9fb' }}>
-                            {previewUrl && (
-                                <img src={previewUrl} alt="Input UI" style={{ width: '100%', display: 'block' }} />
-                            )}
-                        </div>
+                {/* Loading state */}
+                {uigenLoading && (
+                    <div className="spinner-container">
+                        <div className="spinner" />
+                        <div className="spinner-text">Generating Enhanced UI</div>
+                        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)', marginTop: '0.5rem', textAlign: 'center' }}>
+                            Running UIGen 6-phase pipeline… This may take a few minutes.
+                        </p>
                     </div>
+                )}
 
-                    {/* Enhanced Output */}
-                    <div>
-                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700, color: 'var(--green-text)' }}>Enhanced Output</h3>
-                        <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--green-accent, #4CAF50)', background: '#f9f9fb' }}>
-                            <img src={enhancedImageUrl} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
+                {/* Results */}
+                {!uigenLoading && uigenResults && (
+                    <>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem', alignItems: 'start' }}>
+                            {/* Input Image */}
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <h3 style={{ marginBottom: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Input Interface</h3>
+                                <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--border-light)', background: '#f9f9fb', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+                                    {previewUrl && (
+                                        <img src={previewUrl} alt="Input UI" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* UIGen Enhanced Output */}
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <h3 style={{ marginBottom: '0.75rem', fontWeight: 700, color: 'var(--green-text)' }}>Enhanced Output</h3>
+                                <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--green-accent, #4CAF50)', background: '#f9f9fb', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+                                    {uigenImageUrl ? (
+                                        <img src={uigenImageUrl} alt="UIGen Enhanced UI" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                                    ) : (
+                                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                            Image generation was not available. Check server logs.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <button
-                    className="btn btn-outline"
-                    style={{ width: '100%' }}
-                    onClick={() => setPageStep('results')}
-                >
-                    ← Back to Enhanced Output
-                </button>
+                        <button
+                            className="btn btn-outline"
+                            style={{ width: '100%' }}
+                            onClick={() => setPageStep('results')}
+                        >
+                            ← Back to Enhanced Output
+                        </button>
+                    </>
+                )}
+
+                {/* Error fallback */}
+                {!uigenLoading && !uigenResults && error && (
+                    <div style={{ color: '#ef4444', padding: '1rem', backgroundColor: '#fef2f2', border: '1px solid #f87171', borderRadius: '4px', textAlign: 'center' }}>
+                        {error}
+                        <br />
+                        <button className="btn btn-outline" style={{ marginTop: '1rem' }} onClick={() => setPageStep('results')}>
+                            ← Back to Results
+                        </button>
+                    </div>
+                )}
             </div>
         )
     }

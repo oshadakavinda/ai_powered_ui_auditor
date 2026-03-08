@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from server.config import ensure_upload_dir
-from server.routers import audit, health, feedback, export, feedback_generator, video_analysis
+from server.routers import audit, health, feedback, export, feedback_generator, video_analysis, uigen_audit
 
 # ---------------------------------------------------------------------------
 # App factory
@@ -43,6 +43,7 @@ app.include_router(feedback.router)
 app.include_router(export.router)
 app.include_router(feedback_generator.router)
 app.include_router(video_analysis.router)
+app.include_router(uigen_audit.router)
 
 # Ensure upload directory exists on startup
 ensure_upload_dir()
