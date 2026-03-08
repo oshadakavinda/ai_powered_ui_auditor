@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 
 type AnalysisOption = 'rules' | 'elements' | 'all'
-type PageStep = 'selection' | 'processing' | 'results'
+type PageStep = 'selection' | 'processing' | 'results' | 'comparison'
 
 interface CombinedAnalysisProps {
     onBack: () => void
@@ -23,6 +23,7 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
     const [results, setResults] = useState<any>(null)
     const [error, setError] = useState<string | null>(null)
     const [processingStatus, setProcessingStatus] = useState('')
+
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const simulateUpload = useCallback((file: File) => {
@@ -165,6 +166,8 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
 
     // ─── RESULTS STEP (Comp3 output) ───
     if (pageStep === 'results' && results) {
+        const enhancedImageUrl = `http://localhost:8000${selected === 'rules' ? results.images.phase1_technical : selected === 'elements' ? results.images.phase2_aesthetic : results.images.phase3_synthesis}`
+
         return (
             <div className="page-container page-enter">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -174,13 +177,75 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                             <polyline points="12 19 5 12 12 5"></polyline>
                         </svg>
                     </button>
-                    <h1 className="page-heading" style={{ margin: 0 }}>Enhancement Results</h1>
+                    <h1 className="page-heading" style={{ margin: 0 }}>Enhanced Output</h1>
                 </div>
 
-                <div className="comparison-view" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                {/* Enhanced Output Only */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{
+                        borderRadius: 'var(--radius-lg)',
+                        overflow: 'hidden',
+                        border: '2px solid var(--green-accent, #4CAF50)',
+                        background: '#f9f9fb',
+                        boxShadow: 'var(--shadow-md)',
+                    }}>
+                        <img src={enhancedImageUrl} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
+                    </div>
+                </div>
+
+                {/* Preview Comparison Button */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+                    <button
+                        className="btn btn-primary btn-primary-lg shadow-glow"
+                        style={{ width: '100%', maxWidth: 400 }}
+                        onClick={() => setPageStep('comparison')}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}>
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                        </svg>
+                        Preview Comparison
+                    </button>
+                    <button
+                        className="btn btn-outline"
+                        style={{ width: '100%', maxWidth: 400 }}
+                        onClick={() => {
+                            setResults(null)
+                            setUploadedFile(null)
+                            setPreviewUrl(null)
+                            setUploadProgress(0)
+                            setPageStep('selection')
+                        }}
+                    >
+                        Analyze Another UI
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
+    // ─── COMPARISON STEP (Input vs Enhanced side-by-side) ───
+    if (pageStep === 'comparison' && results) {
+        const enhancedImageUrl = `http://localhost:8000${selected === 'rules' ? results.images.phase1_technical : selected === 'elements' ? results.images.phase2_aesthetic : results.images.phase3_synthesis}`
+
+        return (
+            <div className="page-container page-enter">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <button onClick={() => setPageStep('results')} className="back-button-circle" title="Back to Results">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+                    <h1 className="page-heading" style={{ margin: 0 }}>Input vs Enhanced</h1>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
                     {/* Input Image */}
                     <div>
-                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700 }}>Input Interface</h3>
+                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>Input Interface</h3>
                         <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--border-light)', background: '#f9f9fb' }}>
                             {previewUrl && (
                                 <img src={previewUrl} alt="Input UI" style={{ width: '100%', display: 'block' }} />
@@ -188,11 +253,11 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                         </div>
                     </div>
 
-                    {/* Output Image */}
+                    {/* Enhanced Output */}
                     <div>
-                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700 }}>Enhanced Output</h3>
+                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700, color: 'var(--green-text)' }}>Enhanced Output</h3>
                         <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--green-accent, #4CAF50)', background: '#f9f9fb' }}>
-                            <img src={`http://localhost:8000${selected === 'rules' ? results.images.phase1_technical : selected === 'elements' ? results.images.phase2_aesthetic : results.images.phase3_synthesis}`} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
+                            <img src={enhancedImageUrl} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
                         </div>
                     </div>
                 </div>
@@ -200,15 +265,9 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                 <button
                     className="btn btn-outline"
                     style={{ width: '100%' }}
-                    onClick={() => {
-                        setResults(null)
-                        setUploadedFile(null)
-                        setPreviewUrl(null)
-                        setUploadProgress(0)
-                        setPageStep('selection')
-                    }}
+                    onClick={() => setPageStep('results')}
                 >
-                    Analyze Another UI
+                    ← Back to Enhanced Output
                 </button>
             </div>
         )
