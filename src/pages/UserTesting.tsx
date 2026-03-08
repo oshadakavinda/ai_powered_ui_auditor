@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 
 interface UserTestingProps {
     step: string
@@ -27,6 +27,7 @@ interface AnalysisIssue {
     title: string
     desc: string
     time: string
+    timestamp_ms: number
     reaction: string
     ui_element: string
     bounding_box: { x1: number; y1: number; x2: number; y2: number }
@@ -78,6 +79,20 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
     const webcamChunksRef = useRef<Blob[]>([])
     const [recordedBlobs, setRecordedBlobs] = useState<{ screen?: Blob, webcam?: Blob }>({})
 
+    // Memoized object URL for screen recording preview (avoids creating new URLs on every render)
+    const screenPreviewUrl = useMemo(() => {
+        if (recordedBlobs.screen) {
+            return URL.createObjectURL(recordedBlobs.screen);
+        }
+        return null;
+    }, [recordedBlobs.screen]);
+
+    // Cleanup the object URL when it changes or on unmount
+    useEffect(() => {
+        return () => {
+            if (screenPreviewUrl) URL.revokeObjectURL(screenPreviewUrl);
+        };
+    }, [screenPreviewUrl]);
 
     // Recording timer
     useEffect(() => {
@@ -931,9 +946,61 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
                         </div>
                     </div>
 
-                    {/* Expanded with element info & recommendations */}
+                    {/* Expanded with element info, video preview & recommendations */}
                     {expandedIssue === issue.id && (
                         <div style={{ paddingLeft: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+                            {/* Screen Recording Preview at Timestamp */}
+                            {screenPreviewUrl && (
+                                <div style={{
+                                    marginBottom: 'var(--space-4)',
+                                    background: 'rgba(0,0,0,0.4)',
+                                    borderRadius: 12,
+                                    overflow: 'hidden',
+                                    border: '1px solid rgba(255,255,255,0.08)'
+                                }}>
+                                    <div style={{
+                                        padding: '0.5rem 1rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        fontSize: 'var(--font-sm)',
+                                        color: 'var(--text-secondary)',
+                                        borderBottom: '1px solid rgba(255,255,255,0.06)'
+                                    }}>
+                                        <span>🖥️</span>
+                                        <span>Screen at <strong style={{ color: 'var(--text-primary)' }}>{issue.time}</strong></span>
+                                        <span style={{
+                                            marginLeft: 'auto',
+                                            padding: '0.15rem 0.5rem',
+                                            borderRadius: 6,
+                                            background: issue.severity === 'high' ? 'rgba(255,50,50,0.15)' : issue.severity === 'medium' ? 'rgba(255,180,0,0.15)' : 'rgba(100,200,255,0.15)',
+                                            color: issue.severity === 'high' ? 'var(--red-high)' : issue.severity === 'medium' ? '#ffb400' : '#64c8ff',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700
+                                        }}>{issue.reaction}</span>
+                                    </div>
+                                    <video
+                                        style={{
+                                            width: '100%',
+                                            maxHeight: 280,
+                                            objectFit: 'contain',
+                                            display: 'block',
+                                            background: '#000'
+                                        }}
+                                        src={screenPreviewUrl}
+                                        controls
+                                        muted
+                                        playsInline
+                                        preload="metadata"
+                                        onLoadedMetadata={(e) => {
+                                            const video = e.currentTarget;
+                                            const seekTime = (issue.timestamp_ms || 0) / 1000;
+                                            video.currentTime = seekTime;
+                                        }}
+                                    />
+                                </div>
+                            )}
+
                             <div style={{
                                 padding: '0.75rem 1rem',
                                 background: 'rgba(255,255,255,0.03)',

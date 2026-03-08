@@ -307,6 +307,7 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
             "title": title_map.get(event["emotion"], "UI Issue"),
             "desc": (f"User showed '{event['emotion']}' emotion while interacting "
                      f"near '{event['ui_element']}' element"),
+            "timestamp_ms": event["timestamp_ms"],
             "time": _format_timestamp(event["timestamp_ms"]),
             "reaction": event["emotion"].capitalize(),
             "ui_element": event["ui_element"],
