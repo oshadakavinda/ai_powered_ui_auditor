@@ -205,9 +205,16 @@ const UIEnhancerPage: React.FC<UIEnhancerPageProps> = ({ onBack, initialImageUrl
                             </div>
 
                             <div>
-                                <h3 style={{ marginBottom: '1rem' }}>Step 3: Synthesis Output</h3>
-                                <img src={`http://localhost:8000${results.images.phase3_synthesis}`} alt="Synthesis Fixes" style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
+                                <h3 style={{ marginBottom: '1rem' }}>Step 3: Cross-Analysis</h3>
+                                <img src={`http://localhost:8000${results.images.phase3_synthesis}`} alt="Cross-Analysis" style={{ width: '100%', borderRadius: '8px', border: '1px solid var(--border-color)' }} />
                             </div>
+
+                            {results.images.phase6_generated && (
+                                <div>
+                                    <h3 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>✨ AI-Generated Improved UI</h3>
+                                    <img src={`http://localhost:8000${results.images.phase6_generated}`} alt="AI Generated UI" style={{ width: '100%', borderRadius: '8px', border: '2px solid var(--primary-color, #7C4DFF)' }} />
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
