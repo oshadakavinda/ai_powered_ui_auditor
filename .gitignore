@@ -24,7 +24,9 @@ nosetests.xml
 coverage.xml
 *.map
 *.log
-
+UIGen_audit/
+feedback_gen
+ui-analyzer
 # --- Large AI Models & Weights ---
 # (Prevent committing massive binary files)
 SMARTUI_RL/ui_model.pt

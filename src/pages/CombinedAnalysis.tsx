@@ -99,6 +99,7 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
             setProcessingStatus('Generating Enhanced UI…')
             const enhanceFormData = new FormData()
             enhanceFormData.append('ui_image', uploadedFile, uploadedFile.name)
+            enhanceFormData.append('analysis_type', selected)
 
             // Build combined audit JSON from comp1 + comp2 results
             const combinedAudit: any = { elements: [] }
@@ -191,7 +192,7 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                     <div>
                         <h3 style={{ marginBottom: '0.75rem', fontWeight: 700 }}>Enhanced Output</h3>
                         <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--green-accent, #4CAF50)', background: '#f9f9fb' }}>
-                            <img src={`http://localhost:8000${results.images.phase3_synthesis}`} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
+                            <img src={`http://localhost:8000${selected === 'rules' ? results.images.phase1_technical : selected === 'elements' ? results.images.phase2_aesthetic : results.images.phase3_synthesis}`} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
                         </div>
                     </div>
                 </div>

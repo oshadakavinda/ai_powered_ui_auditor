@@ -4,7 +4,7 @@ import uuid
 
 from typing import Optional
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse, FileResponse
 
 from server.config import UPLOAD_DIR
@@ -15,7 +15,8 @@ router = APIRouter(prefix="/feedback", tags=["feedback"])
 @router.post("/generate", summary="Generate multi-phase feedback for a UI design")
 async def generate_feedback(
     ui_image: UploadFile = File(...),
-    audit_json: Optional[UploadFile] = File(None)
+    audit_json: Optional[UploadFile] = File(None),
+    analysis_type: str = Form("all")
 ):
     """
     Accepts an image and an optional JSON audit file, runs the multi-phase Gemini/YOLO pipeline,
@@ -44,7 +45,8 @@ async def generate_feedback(
         result = run_feedback_pipeline(
             ui_image_path=img_path, 
             json_file_path=json_path,
-            yolo_model_path=yolo_path
+            yolo_model_path=yolo_path,
+            analysis_type=analysis_type
         )
         
         if "error" in result:

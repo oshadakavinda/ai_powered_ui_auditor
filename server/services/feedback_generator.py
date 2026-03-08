@@ -58,7 +58,7 @@ def get_full_response(prompt, img_path):
 
 # --- MAIN SERVICE PIPELINE ---
 
-def run_feedback_pipeline(ui_image_path: str, json_file_path: str, yolo_model_path: str = "yolov8n.pt"):
+def run_feedback_pipeline(ui_image_path: str, json_file_path: str, yolo_model_path: str = "yolov8n.pt", analysis_type: str = "all"):
     """
     Runs the multi-phase UI audit and saves annotated images.
     Returns the paths to the generated images and the final prompt.
@@ -84,7 +84,7 @@ def run_feedback_pipeline(ui_image_path: str, json_file_path: str, yolo_model_pa
         return False
 
     # --- PHASE 1: TECHNICAL ---
-    if os.path.exists(json_file_path):
+    if analysis_type in ['rules', 'all'] and os.path.exists(json_file_path):
         with open(json_file_path, 'r') as f:
             data = json.load(f)
             elements = data.get('elements', [])
@@ -106,72 +106,83 @@ def run_feedback_pipeline(ui_image_path: str, json_file_path: str, yolo_model_pa
             processed_bboxes.append(bbox)
             
     # --- PHASE 2: AESTHETIC ---
-    results = model(ui_image_path)
-    temp_annotated = os.path.join(UPLOAD_DIR, f"temp_annotated_{uuid.uuid4().hex[:8]}.jpg")
-    cv2.imwrite(temp_annotated, results[0].plot()) 
-    
-    count = 0
-    for box in results[0].boxes.xyxy.cpu().numpy():
-        if count >= 3: break
-        if is_duplicate(box): continue 
+    temp_annotated = ""
+    if analysis_type in ['elements', 'all']:
+        results = model(ui_image_path)
+        temp_annotated = os.path.join(UPLOAD_DIR, f"temp_annotated_{uuid.uuid4().hex[:8]}.jpg")
+        cv2.imwrite(temp_annotated, results[0].plot()) 
         
-        prompt = "EXACTLY 3 words ONLY. Suggest one style/spacing fix for this UI element. Answer format: 'Word Word Word'. NO extra words, NO punctuation. THREE WORDS ONLY."
-        fix_short = ask_gemini(prompt, temp_annotated)
-        collected_issues.append(f"- Improve aesthetics: {fix_short}")
-        
-        draw_exact_format(img_p2, box, "Similarity Mismatch", fix_short)
-        draw_exact_format(img_p3, box, "Similarity Mismatch", fix_short)
-        processed_bboxes.append(box)
-        count += 1
+        count = 0
+        for box in results[0].boxes.xyxy.cpu().numpy():
+            if count >= 3: break
+            if is_duplicate(box): continue 
+            
+            prompt = "EXACTLY 3 words ONLY. Suggest one style/spacing fix for this UI element. Answer format: 'Word Word Word'. NO extra words, NO punctuation. THREE WORDS ONLY."
+            fix_short = ask_gemini(prompt, temp_annotated)
+            collected_issues.append(f"- Improve aesthetics: {fix_short}")
+            
+            draw_exact_format(img_p2, box, "Similarity Mismatch", fix_short)
+            draw_exact_format(img_p3, box, "Similarity Mismatch", fix_short)
+            processed_bboxes.append(box)
+            count += 1
 
     # --- PHASE 3: SYNTHESIS ---
-    final_prompt = "EXACTLY 4 words ONLY. What is the top UX priority? Answer format: 'Word Word Word Word'. NO extra words, NO punctuation. FOUR WORDS ONLY."
-    synthesis_msg = ask_gemini(final_prompt, temp_annotated)
-    
-    cv2.rectangle(img_p3, (0,0), (img_p3.shape[1], 60), (150, 0, 0), -1)
-    cv2.putText(img_p3, f"SYNTHESIS: {synthesis_msg}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+    synthesis_msg = ""
+    if analysis_type == 'all':
+        final_prompt = "EXACTLY 4 words ONLY. What is the top UX priority? Answer format: 'Word Word Word Word'. NO extra words, NO punctuation. FOUR WORDS ONLY."
+        synthesis_msg = ask_gemini(final_prompt, temp_annotated if temp_annotated else ui_image_path)
+        
+        cv2.rectangle(img_p3, (0,0), (img_p3.shape[1], 60), (150, 0, 0), -1)
+        cv2.putText(img_p3, f"SYNTHESIS: {synthesis_msg}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
 
     # Clean up temp file
-    if os.path.exists(temp_annotated):
+    if temp_annotated and os.path.exists(temp_annotated):
         os.remove(temp_annotated)
 
     # Save outputs with unique IDs
     req_id = uuid.uuid4().hex[:8]
-    out1_path = os.path.join(UPLOAD_DIR, f"{req_id}_p1.jpg")
-    out2_path = os.path.join(UPLOAD_DIR, f"{req_id}_p2.jpg")
-    out3_path = os.path.join(UPLOAD_DIR, f"{req_id}_p3.jpg")
+    images = {}
     
-    cv2.imwrite(out1_path, img_p1)
-    cv2.imwrite(out2_path, img_p2)
-    cv2.imwrite(out3_path, img_p3)
+    if analysis_type in ['rules', 'all']:
+        out1_path = os.path.join(UPLOAD_DIR, f"{req_id}_p1.jpg")
+        cv2.imwrite(out1_path, img_p1)
+        images["phase1_technical"] = f"/feedback/report/{req_id}_p1"
+        
+    if analysis_type in ['elements', 'all']:
+        out2_path = os.path.join(UPLOAD_DIR, f"{req_id}_p2.jpg")
+        cv2.imwrite(out2_path, img_p2)
+        images["phase2_aesthetic"] = f"/feedback/report/{req_id}_p2"
+        
+    if analysis_type == 'all':
+        out3_path = os.path.join(UPLOAD_DIR, f"{req_id}_p3.jpg")
+        cv2.imwrite(out3_path, img_p3)
+        images["phase3_synthesis"] = f"/feedback/report/{req_id}_p3"
 
     # --- PHASE 4: PROMPT GENERATION ---
-    issues_text = "\n".join(collected_issues)
-    prompt_req = f"""
-    You are an expert Prompt Engineer for Midjourney and Stable Diffusion.
-    I have a UI interface (attached) that has these specific flaws:
-    {issues_text}
-    
-    The main goal is: {synthesis_msg}
-    
-    Write a detailed text-to-image prompt to generate a fixed, high-quality version of this UI.
-    Include specific details on:
-    1. Modern clean layout (solving the clutter).
-    2. Color palette and Typography.
-    3. Correcting the specific technical errors listed above.
-    
-    Return ONLY the prompt string.
-    """
-    
-    final_prompt_text = get_full_response(prompt_req, ui_image_path)
+    final_prompt_text = ""
+    if analysis_type == 'all':
+        issues_text = "\n".join(collected_issues)
+        prompt_req = f"""
+        You are an expert Prompt Engineer for Midjourney and Stable Diffusion.
+        I have a UI interface (attached) that has these specific flaws:
+        {issues_text}
+        
+        The main goal is: {synthesis_msg}
+        
+        Write a detailed text-to-image prompt to generate a fixed, high-quality version of this UI.
+        Include specific details on:
+        1. Modern clean layout (solving the clutter).
+        2. Color palette and Typography.
+        3. Correcting the specific technical errors listed above.
+        
+        Return ONLY the prompt string.
+        """
+        
+        final_prompt_text = get_full_response(prompt_req, ui_image_path)
     
     return {
         "status": "success",
-        "images": {
-            "phase1_technical": f"/feedback/report/{req_id}_p1",
-            "phase2_aesthetic": f"/feedback/report/{req_id}_p2",
-            "phase3_synthesis": f"/feedback/report/{req_id}_p3"
-        },
+        "images": images,
         "synthesis_message": synthesis_msg,
         "generator_prompt": final_prompt_text
     }
