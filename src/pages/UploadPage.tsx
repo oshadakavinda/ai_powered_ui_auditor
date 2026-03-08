@@ -15,6 +15,21 @@ export default function UploadPage({ onBack, onProcess }: UploadPageProps) {
     const [dragOver, setDragOver] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const PROFILE_OPTIONS = [
+        { value: 'universal', label: 'Universal Rules' },
+        { value: 'apple', label: 'Apple HIG' },
+        { value: 'google', label: 'Google Material Design' },
+        { value: 'android', label: 'Android' },
+        { value: 'microsoft', label: 'Microsoft Fluent' },
+        { value: 'healthcare', label: 'Healthcare' },
+        { value: 'ecommerce', label: 'E-commerce' },
+        { value: 'gaming', label: 'Gaming' },
+        { value: 'enterprise', label: 'Enterprise' },
+        { value: 'web', label: 'Web Standards' },
+        { value: 'all', label: 'All Rules' },
+        { value: 'overview', label: 'Overview' },
+    ]
+
     const handleFileDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault()
         setDragOver(false)
@@ -62,8 +77,19 @@ export default function UploadPage({ onBack, onProcess }: UploadPageProps) {
                 <h1 className="page-heading" style={{ margin: 0 }}>Upload Your Interface Design</h1>
             </div>
 
-
-            {/* Drag & Drop Zone */}
+            {/* Rule Profile Dropdown */}
+            <div className="toggle-tabs" style={{ marginBottom: '1.5rem' }}>
+                <select
+                    className="dropdown"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid var(--border-light)' }}
+                >
+                    {PROFILE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                </select>
+            </div>
             <div
                 className={`upload-zone ${dragOver ? 'drag-over' : ''}`}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
