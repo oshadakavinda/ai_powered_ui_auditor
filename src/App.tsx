@@ -24,10 +24,8 @@ type AppStep =
     | 'element-loading'
     | 'element-interaction'
     | 'element-score'
-    // Option 3: Combined Analysis flow
-    | 'combined-loading'
-    | 'combined-highlighted'
-    | 'combined-preview'
+    // Combined Analysis
+    | 'combined-selection'
     // After any flow → User Testing
     | 'permissions'
     | 'recording'
@@ -96,10 +94,6 @@ export default function App() {
                 setStep('element-loading')
                 setTimeout(() => setStep('element-interaction'), 2500)
                 break
-            case 'all':
-                setStep('combined-loading')
-                setTimeout(() => setStep('combined-highlighted'), 2500)
-                break
         }
     }
 
@@ -136,6 +130,9 @@ export default function App() {
                             </button>
                             <button className="menu-item" onClick={() => { setStep('ui-enhancer'); setIsMenuOpen(false); }}>
                                 <span className="menu-item__icon">✨</span> UI Enhancer
+                            </button>
+                            <button className="menu-item" onClick={() => { setStep('combined-selection'); setIsMenuOpen(false); }}>
+                                <span className="menu-item__icon">🧩</span> Combined Analysis
                             </button>
                             <button className="menu-item" onClick={() => { setStep('permissions'); setIsMenuOpen(false); }}>
                                 <span className="menu-item__icon">📹</span> User Testing
@@ -253,20 +250,10 @@ export default function App() {
                         />
                     )}
 
-                    {/* Option 3: Combined Analysis */}
-                    {step === 'combined-loading' && (
-                        <div className="spinner-container">
-                            <div className="spinner" />
-                            <div className="spinner-text">Loading<br />Combined Analysis</div>
-                        </div>
-                    )}
-
-                    {(step === 'combined-highlighted' || step === 'combined-preview') && (
+                    {/* Combined Analysis (self-contained) */}
+                    {step === 'combined-selection' && (
                         <CombinedAnalysis
-                            step={step}
-                            onStartAnalysis={() => { }}
-                            onGenerateClean={() => setStep('combined-preview')}
-                            onNext={goToUserTesting}
+                            onBack={() => setStep('home')}
                         />
                     )}
 
