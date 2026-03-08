@@ -187,36 +187,11 @@ export default function CombinedAnalysis({ onBack }: CombinedAnalysisProps) {
                         </div>
                     </div>
 
-                    {/* Output Image — Phase 6 if available, else Phase 3 */}
+                    {/* Output Image */}
                     <div>
-                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700 }}>
-                            {results.images.phase6_generated ? '✨ AI-Generated Improved UI' : 'Enhanced Output'}
-                        </h3>
-                        <div style={{ borderRadius: '8px', overflow: 'hidden', border: `2px solid ${results.images.phase6_generated ? 'var(--primary-color, #7C4DFF)' : 'var(--green-accent, #4CAF50)'}`, background: '#f9f9fb' }}>
-                            <img
-                                src={`http://localhost:8000${results.images.phase6_generated || results.images.phase3_synthesis}`}
-                                alt="Enhanced UI"
-                                style={{ width: '100%', display: 'block' }}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Annotated Phase Images */}
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 style={{ fontWeight: 700, marginBottom: '1rem' }}>Detailed Analysis</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: '#dc3232' }}>Phase 1: Error Fixes</p>
-                            <img src={`http://localhost:8000${results.images.phase1_technical}`} alt="Phase 1" style={{ width: '100%', borderRadius: '6px', border: '1px solid var(--border-light)' }} />
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: '#3282dc' }}>Phase 2: Improvements</p>
-                            <img src={`http://localhost:8000${results.images.phase2_aesthetic}`} alt="Phase 2" style={{ width: '100%', borderRadius: '6px', border: '1px solid var(--border-light)' }} />
-                        </div>
-                        <div>
-                            <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: '#28b45a' }}>Phase 3: Cross-Analysis</p>
-                            <img src={`http://localhost:8000${results.images.phase3_synthesis}`} alt="Phase 3" style={{ width: '100%', borderRadius: '6px', border: '1px solid var(--border-light)' }} />
+                        <h3 style={{ marginBottom: '0.75rem', fontWeight: 700 }}>Enhanced Output</h3>
+                        <div style={{ borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--green-accent, #4CAF50)', background: '#f9f9fb' }}>
+                            <img src={`http://localhost:8000${results.images.phase3_synthesis}`} alt="Enhanced UI" style={{ width: '100%', display: 'block' }} />
                         </div>
                     </div>
                 </div>
