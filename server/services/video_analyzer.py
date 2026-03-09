@@ -16,11 +16,11 @@ _yolo_model = None
 _deepface_available = None
 
 def _get_yolo():
-    """Lazy-load the YOLO model for UI element detection."""
+    """Lazy-load the YOLO model for UI element detection (web platform)."""
     global _yolo_model
     if _yolo_model is None:
-        model_path = str(WEIGHTS_DIR / "best.pt")
-        print(f"📥 Loading YOLO model from {model_path}...")
+        model_path = str(WEIGHTS_DIR / "best4.pt")
+        print(f"📥 Loading YOLO model (web) from {model_path}...")
         _yolo_model = YOLO(model_path)
     return _yolo_model
 
@@ -125,21 +125,27 @@ def _format_timestamp(ms: float) -> str:
     return f"{minutes}:{secs:04.1f}s"
 
 
-def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
+def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -> Dict[str, Any]:
     """
-    Main analysis function. Ported from Interactive video analyzer/test2.ipynb Cell 6.
+    Main analysis function.
 
     Takes two video files:
     - cam_path: webcam recording (for emotion detection)
-    - screen_path: screen recording (for UI element detection via YOLO)
+    - screen_path: screen recording (for UI element detection)
+    - platform: "web" (YOLO) or "mobile" (EfficientNet-B0 + GradCAM)
 
     Returns structured JSON with:
     - summary (verdict, confidence, stats)
     - timeline (timestamped events)
     - issues (formatted for frontend display)
     """
+    # --- Platform branching ---
+    if platform == "mobile":
+        from server.services.frustration_analyzer import run_mobile_analysis
+        return run_mobile_analysis(cam_path, screen_path)
+
     print(f"\n{'='*60}")
-    print(f"🎬 Starting Video Analysis...")
+    print(f"🎬 Starting Web Video Analysis (YOLO)...")
     print(f"   Webcam:  {cam_path}")
     print(f"   Screen:  {screen_path}")
     print(f"{'='*60}")
@@ -347,6 +353,8 @@ def run_video_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
         "timeline": timeline_data,
         "recommendations": all_recommendations,
         "meta": {
+            "platform": "web",
+            "model": "YOLO (best4.pt)",
             "cam_video": os.path.basename(cam_path),
             "screen_video": os.path.basename(screen_path),
             "total_frames": frame_idx,

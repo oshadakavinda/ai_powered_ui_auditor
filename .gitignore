@@ -28,12 +28,15 @@ coverage.xml
 UIGen_audit/
 feedback_gen
 ui-analyzer
+ui_frustration_deploy/
 # --- Large AI Models & Weights ---
 # (Prevent committing massive binary files)
 SMARTUI_RL/ui_model.pt
 SMARTUI_RL/tinyllama-*.gguf
 server/expert_style_index.bin
-server/weights/*.pt
+server/weights/best.pt
+server/weights/best3.pt
+server/weights/best4.pt
 server/weights/*.bin
 
 # --- Uploaded & Generated Data ---
@@ -51,3 +54,5 @@ Interactive\ video\ analyzer/__pycache__/
 *.njsproj
 *.sln
 *.swp
+
+

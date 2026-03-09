@@ -55,6 +55,7 @@ interface AnalysisResult {
 
 export default function UserTesting({ step, onBack, onStartRecording, onStopRecording, onAnalyse, onBackToReview, onExport, onDiscard }: UserTestingProps) {
     const [permissions, setPermissions] = useState({ screen: false, webcam: false, storage: false })
+    const [platform, setPlatform] = useState<'web' | 'mobile'>('web')
     const [showTimesUpModal, setShowTimesUpModal] = useState(false)
     const [showExportModal, setShowExportModal] = useState(false)
     const [timeRemaining, setTimeRemaining] = useState(120)
@@ -612,6 +613,35 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
                     )}
                 </div>
 
+                {/* Platform Selector */}
+                <div className="permission-card permission-card--granted">
+                    <div className="permission-card__icon">📱</div>
+                    <div className="permission-card__info">
+                        <div className="permission-card__title">Platform Type</div>
+                        <div className="permission-card__desc">Select the platform your UI is designed for</div>
+                    </div>
+                    <select
+                        id="platform-select"
+                        value={platform}
+                        onChange={(e) => setPlatform(e.target.value as 'web' | 'mobile')}
+                        style={{
+                            padding: '0.5rem 1rem',
+                            borderRadius: '0.5rem',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(0,0,0,0.05)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.95rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            outline: 'none',
+                            minWidth: '130px',
+                        }}
+                    >
+                        <option value="web" style={{ background: '#fff', color: '#000' }}>🖥️ Web</option>
+                        <option value="mobile" style={{ background: '#fff', color: '#000' }}>📱 Mobile</option>
+                    </select>
+                </div>
+
                 <div className="privacy-notice-v2">
                     <div className="privacy-notice-v2__icon">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -708,6 +738,7 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
                                     const formData = new FormData();
                                     formData.append('screen_video', recordedBlobs.screen, `screen-${Date.now()}.webm`);
                                     formData.append('webcam_video', recordedBlobs.webcam, `webcam-${Date.now()}.webm`);
+                                    formData.append('platform', platform);
 
                                     const response = await fetch('http://localhost:8000/video-analysis/analyze', {
                                         method: 'POST',
