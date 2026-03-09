@@ -6,7 +6,7 @@ import os
 import uuid
 import shutil
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 
 from server.config import UPLOAD_DIR
@@ -18,7 +18,8 @@ router = APIRouter(prefix="/video-analysis", tags=["video-analysis"])
 @router.post("/analyze", summary="Analyze webcam + screen recordings for UI issues")
 async def analyze_videos(
     screen_video: UploadFile = File(..., description="Screen recording (.webm)"),
-    webcam_video: UploadFile = File(..., description="Webcam recording (.webm)")
+    webcam_video: UploadFile = File(..., description="Webcam recording (.webm)"),
+    platform: str = Form("web", description="Platform type: 'web' or 'mobile'")
 ):
     """
     Upload screen and webcam recordings for AI-powered user testing analysis.
@@ -50,10 +51,11 @@ async def analyze_videos(
         with open(webcam_path, "wb") as f:
             shutil.copyfileobj(webcam_video.file, f)
 
+        print(f"📱 Platform: {platform}")
         print(f"✅ Video files synchronized. Starting AI Analysis Pipeline...")
 
         # Run analysis
-        result = run_video_analysis(webcam_path, screen_path)
+        result = run_video_analysis(webcam_path, screen_path, platform=platform)
 
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
