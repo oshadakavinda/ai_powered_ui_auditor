@@ -113,6 +113,7 @@ This starts the Vite dev server and launches the Electron desktop application au
 
 #### 2. Backend (AI Server)
 ```bash
+source ven/bin/activate
 pip install -r server/requirements.txt
 python3 -m uvicorn server.main:app --reload --port 8000
 ```

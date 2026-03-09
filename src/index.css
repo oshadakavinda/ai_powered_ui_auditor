@@ -97,7 +97,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, #eef1ff 30%, #f5f0ff 60%, #fce4ec10 100%);
+  background: var(--bg-primary);
 }
 
 .app-container::before {

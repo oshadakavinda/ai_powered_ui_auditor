@@ -614,7 +614,7 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
                 </div>
 
                 {/* Platform Selector */}
-                <div className="permission-card permission-card--granted" style={{ borderColor: 'var(--accent-purple, #a855f7)' }}>
+                <div className="permission-card permission-card--granted">
                     <div className="permission-card__icon">📱</div>
                     <div className="permission-card__info">
                         <div className="permission-card__title">Platform Type</div>
@@ -628,23 +628,17 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
                             padding: '0.5rem 1rem',
                             borderRadius: '0.5rem',
                             border: '1px solid rgba(255,255,255,0.15)',
-                            background: 'rgba(255,255,255,0.08)',
-                            color: '#fff',
+                            background: 'rgba(0,0,0,0.05)',
+                            color: 'var(--text-primary)',
                             fontSize: '0.95rem',
                             fontWeight: 500,
                             cursor: 'pointer',
                             outline: 'none',
                             minWidth: '130px',
-                            appearance: 'none',
-                            WebkitAppearance: 'none',
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-                            backgroundRepeat: 'no-repeat',
-                            backgroundPosition: 'right 0.75rem center',
-                            paddingRight: '2.5rem',
                         }}
                     >
-                        <option value="web" style={{ background: '#1a1a2e', color: '#fff' }}>🖥️ Web</option>
-                        <option value="mobile" style={{ background: '#1a1a2e', color: '#fff' }}>📱 Mobile</option>
+                        <option value="web" style={{ background: '#fff', color: '#000' }}>🖥️ Web</option>
+                        <option value="mobile" style={{ background: '#fff', color: '#000' }}>📱 Mobile</option>
                     </select>
                 </div>
 
