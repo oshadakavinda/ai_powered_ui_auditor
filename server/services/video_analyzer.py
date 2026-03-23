@@ -238,6 +238,7 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
                         print(f"   🚩 Triggering YOLO detection on screen due to negative emotion: {dominant_emotion}")
                         results = yolo(frame_scr, verbose=False, device='cpu')
 
+                        found_box = False
                         for r in results:
                             if len(r.boxes) > 0:
                                 box = r.boxes[0]  # Most confident detection
@@ -258,9 +259,24 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
                                     }
                                 }
                                 timeline_data.append(event)
+                                found_box = True
                                 print(f"   ⚠️ [{_format_timestamp(current_time_ms)}] "
                                       f"{dominant_emotion.upper()} → {event['ui_element']}")
                                 break
+                        
+                        # If no specific UI element found, record as general emotion event
+                        if not found_box:
+                            print(f"   🔍 No specific YOLO detection, recording as general emotion event")
+                            event = {
+                                "frame": frame_idx,
+                                "timestamp_ms": round(current_time_ms, 2),
+                                "emotion": dominant_emotion,
+                                "ui_element": "General UI Area",
+                                "bounding_box": None
+                            }
+                            timeline_data.append(event)
+                            print(f"   ⚠️ [{_format_timestamp(current_time_ms)}] "
+                                  f"{dominant_emotion.upper()} → General UI")
                 elif frame_idx % 150 == 0:
                     # Log periodically when emotion detection returns nothing
                     print(f"   [Frame {frame_idx}] No emotion detected (DeepFace returned None)")
@@ -342,7 +358,7 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
             "verdict": verdict,
             "confidence": confidence,
             "total_issues": events_detected,
-            "emotional_reactions": len(unique_emotions),
+            "emotional_reactions": events_detected,
             "suggestions_count": len(all_recommendations),
             "dominant_emotion": dominant_overall,
             "screen_motion_avg": round(screen_motion_sum / max(valid_frames, 1), 2),

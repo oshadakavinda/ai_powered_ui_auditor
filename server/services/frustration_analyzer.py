@@ -427,7 +427,18 @@ def run_mobile_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
                                       f"{dominant_emotion.upper()} → hotspot at "
                                       f"({box['x1']},{box['y1']})-({box['x2']},{box['y2']})")
                         else:
-                            print(f"   ✅ Below threshold ({FRUSTRATION_THRESHOLD:.0%}), skipped")
+                            print(f"   ✅ Below threshold ({FRUSTRATION_THRESHOLD:.0%}), recording as general emotion event")
+                            event = {
+                                "frame": frame_idx,
+                                "timestamp_ms": round(current_time_ms, 2),
+                                "emotion": dominant_emotion,
+                                "ui_element": "General UI (Low Frustration)",
+                                "bounding_box": None,
+                                "frustration_prob": round(frust_prob, 3),
+                            }
+                            timeline_data.append(event)
+                            print(f"   ⚠️ [{_format_timestamp(current_time_ms)}] "
+                                  f"{dominant_emotion.upper()} → General UI")
 
             except Exception as e:
                 print(f"   ⚠️ Frame {frame_idx} error: {e}")
@@ -500,7 +511,7 @@ def run_mobile_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
             "verdict": verdict,
             "confidence": confidence,
             "total_issues": events_detected,
-            "emotional_reactions": len(unique_emotions),
+            "emotional_reactions": events_detected,
             "suggestions_count": len(all_recommendations),
             "dominant_emotion": dominant_overall,
             "screen_motion_avg": round(screen_motion_sum / max(valid_frames, 1), 2),

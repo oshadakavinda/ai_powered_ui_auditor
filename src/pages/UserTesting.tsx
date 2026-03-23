@@ -30,7 +30,7 @@ interface AnalysisIssue {
     timestamp_ms: number
     reaction: string
     ui_element: string
-    bounding_box: { x1: number; y1: number; x2: number; y2: number }
+    bounding_box: { x1: number; y1: number; x2: number; y2: number } | null
     recommendations: string[]
 }
 
@@ -264,9 +264,11 @@ export default function UserTesting({ step, onBack, onStartRecording, onStopReco
                         <strong>Targeted Component</strong>
                         ${issue.ui_element}
                     </div>
-                    <div class="detail-item">
+                    <div className="detail-item">
                         <strong>Bounding Box</strong>
-                        (${issue.bounding_box.x1}, ${issue.bounding_box.y1}) to (${issue.bounding_box.x2}, ${issue.bounding_box.y2})
+                        ${issue.bounding_box
+                            ? `(${issue.bounding_box.x1}, ${issue.bounding_box.y1}) to (${issue.bounding_box.x2}, ${issue.bounding_box.y2})`
+                            : 'N/A (General Area)'}
                     </div>
                 </div>
                 <div style="margin-top: 15px;">
