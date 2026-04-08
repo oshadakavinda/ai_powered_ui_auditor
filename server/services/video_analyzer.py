@@ -185,6 +185,7 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
 
     # Tracking data
     timeline_data = []
+    captured_screen_frames = []  # Screen frames captured at issue moments for Gemini Vision
     emotions_sum = {'angry': 0, 'disgust': 0, 'fear': 0, 'happy': 0,
                     'sad': 0, 'surprise': 0, 'neutral': 0}
     screen_motion_sum = 0.0
@@ -258,6 +259,7 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
                                     }
                                 }
                                 timeline_data.append(event)
+                                captured_screen_frames.append(frame_scr.copy())
                                 print(f"   ⚠️ [{_format_timestamp(current_time_ms)}] "
                                       f"{dominant_emotion.upper()} → {event['ui_element']}")
                                 break
@@ -296,9 +298,10 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
 
     # --- Build Issues List (for frontend) ---
     issues = []
+    issues_context = []  # Context dicts for Gemini advisor
+
     for i, event in enumerate(timeline_data):
         severity = _map_emotion_to_severity(event["emotion"])
-        recs = _generate_recommendations(event["emotion"], event["ui_element"])
 
         title_map = {
             "angry": "Interaction Failure",
@@ -318,17 +321,32 @@ def run_video_analysis(cam_path: str, screen_path: str, platform: str = "web") -
             "reaction": event["emotion"].capitalize(),
             "ui_element": event["ui_element"],
             "bounding_box": event["bounding_box"],
-            "recommendations": recs
+            "recommendations": []  # Will be filled by Gemini or fallback
         })
 
-    # --- Generate overall suggestions ---
-    all_recommendations = []
-    seen_recs = set()
-    for issue in issues:
-        for rec in issue.get("recommendations", []):
-            if rec not in seen_recs:
-                all_recommendations.append(rec)
-                seen_recs.add(rec)
+        issues_context.append({
+            "emotion": event["emotion"],
+            "ui_element": event["ui_element"],
+            "bounding_box": event["bounding_box"],
+            "timestamp_ms": event["timestamp_ms"],
+        })
+
+    # --- Generate recommendations via Gemini LLM (falls back to templates) ---
+    from server.services.gemini_advisor import (
+        generate_issue_recommendations,
+        generate_overall_recommendations,
+    )
+
+    per_issue_recs = generate_issue_recommendations(
+        issues_context, captured_screen_frames, platform="web"
+    )
+    for i, recs in enumerate(per_issue_recs):
+        if i < len(issues):
+            issues[i]["recommendations"] = recs
+
+    all_recommendations = generate_overall_recommendations(
+        issues_context, per_issue_recs, platform="web"
+    )
 
     print(f"\n{'='*60}")
     print(f"✅ Analysis Complete!")
