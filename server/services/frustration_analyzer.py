@@ -346,6 +346,7 @@ def run_mobile_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
     triggers = ['angry', 'disgust', 'fear', 'sad']
 
     timeline_data = []
+    captured_screen_frames = []  # Screen frames captured at issue moments for Gemini Vision
     emotions_sum = {'angry': 0, 'disgust': 0, 'fear': 0, 'happy': 0,
                     'sad': 0, 'surprise': 0, 'neutral': 0}
     screen_motion_sum = 0.0
@@ -423,6 +424,7 @@ def run_mobile_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
                                     "frustration_prob": round(frust_prob, 3),
                                 }
                                 timeline_data.append(event)
+                                captured_screen_frames.append(frame_scr.copy())
                                 print(f"   ⚠️ [{_format_timestamp(current_time_ms)}] "
                                       f"{dominant_emotion.upper()} → hotspot at "
                                       f"({box['x1']},{box['y1']})-({box['x2']},{box['y2']})")
@@ -453,10 +455,11 @@ def run_mobile_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
 
     # --- Build Issues List ---
     issues = []
+    issues_context = []  # Context dicts for Gemini advisor
+
     for i, event in enumerate(timeline_data):
         severity = _map_emotion_to_severity(event["emotion"])
         frust_prob = event.get("frustration_prob", 0.5)
-        recs = _generate_recommendations(event["emotion"], frust_prob)
 
         title_map = {
             "angry": "Frustration Hotspot",
@@ -476,17 +479,33 @@ def run_mobile_analysis(cam_path: str, screen_path: str) -> Dict[str, Any]:
             "reaction": event["emotion"].capitalize(),
             "ui_element": event["ui_element"],
             "bounding_box": event["bounding_box"],
-            "recommendations": recs
+            "recommendations": []  # Will be filled by Gemini or fallback
         })
 
-    # --- Overall suggestions ---
-    all_recommendations = []
-    seen_recs = set()
-    for issue in issues:
-        for rec in issue.get("recommendations", []):
-            if rec not in seen_recs:
-                all_recommendations.append(rec)
-                seen_recs.add(rec)
+        issues_context.append({
+            "emotion": event["emotion"],
+            "ui_element": event["ui_element"],
+            "bounding_box": event["bounding_box"],
+            "timestamp_ms": event["timestamp_ms"],
+            "frustration_prob": frust_prob,
+        })
+
+    # --- Generate recommendations via Gemini LLM (falls back to templates) ---
+    from server.services.gemini_advisor import (
+        generate_issue_recommendations,
+        generate_overall_recommendations,
+    )
+
+    per_issue_recs = generate_issue_recommendations(
+        issues_context, captured_screen_frames, platform="mobile"
+    )
+    for i, recs in enumerate(per_issue_recs):
+        if i < len(issues):
+            issues[i]["recommendations"] = recs
+
+    all_recommendations = generate_overall_recommendations(
+        issues_context, per_issue_recs, platform="mobile"
+    )
 
     print(f"\n{'='*60}")
     print(f"✅ Mobile Analysis Complete!")
